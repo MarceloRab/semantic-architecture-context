@@ -1,0 +1,53 @@
+# .cursorrules - semantic-architecture-context
+mission:[practical,verifiable,low_noise,code_over_prompts,recorded_context_first]
+context_mode:{
+  default: "small-context",
+  expanded_requires_user_approval: true,
+  auto_read_only: [".cursorrules",".antigravityignore"],
+}
+read_hierarchy:{
+  L1_gate: [".cursorrules",".antigravityignore"],
+  L2_restart_snapshot: [".context/active_context.md"],
+}
+anti_scan:[
+  "req: run `.context/skills/domains/prompting/surgical-request/SKILL.md` before broad scans/probing.",
+  "skip_req: for fast-path exact targeted local edits.",
+  "blocked: broad scans (rg_all, get-childitem-recurse) before L1 gate.",
+  "budget: max_4_reads(small-context), 5th read requires explicit user approval, max_10_reads(expanded+user_ack).",
+  "rules: NO reopening same file same task unless new evidence. Prefer 1 drawer read."
+]
+mcp_first:[
+  "policy: prefer MCP over terminal scans.",
+  "priorities: [filesystem, firebase, context7, sequential-thinking]",
+  "log: always state 'MCPs used' or 'Why MCP was not used'."
+]
+skill_triggers:[
+  "planning: run planning-and-deciding before architectural decisions or feature scoping.",
+  "bug: run investigating-bugs before attempting fixes on non-trivial errors.",
+  "context_drift: run validating-context-efficacy when recorded context feels stale or contradictory.",
+  "status_change: run updating-project-status after completing milestones or changing execution state.",
+  "debug_trace: run intelligent-debug-logging when instrumenting observability.",
+  "flutter_arch: run validating-flutter-projects before major Flutter structural changes.",
+  "performance: run performance-profiling-flutter for jank or slow frames.",
+  "security: run security-audit before auth, storage, or network changes.",
+  "task_gate: run validating-task-blocks before executing multi-step plans.",
+  "code_review: run reviewing-code-changes before claiming work complete."
+]
+lifecycle:[
+  "skills: check .context/skills/ before solving from scratch.",
+  "routing: do not auto-route to .agent/workflows/TRIGGER_MAP.md; open only when the user request or current task explicitly requires it.",
+  "maintenance: do not suggest or run context maintenance automatically at chat start.",
+  "bootstrap: never auto-trigger bootstrap-fill; any context update or first-fill is manual and must be explicitly requested or approved by the user."
+]
+
+search_policy:[
+"resolved domain: load context once for at most one domain; restrict fd/rg/bat to its files or objectively derived subdirectories",
+"domain.files is a search boundary, never a read queue: open the task target first; each additional code file requires explicit target, verify/hop1, direct import/call, or stale-index evidence",
+"zero compatible domains: report sac_scope=unmapped; use fd only in bounded directories, then rg scoped and bat exact ranges; no objective directory means HALT",
+"multiple compatible domains: HALT for ambiguity",
+"scoped rg is allowed and preferred; repo-wide rg remains blocked",
+"never replace a blocked broad search with Get-ChildItem -Recurse, Select-String, or equivalent PowerShell script",
+"CLI/JSON fallback: prefer jq; diff review: prefer delta; fzf/zoxide are interactive and not default agent paths",
+"final report: sac_scope + context_domains_loaded + actual search_scope + opened_files with reasons + deprecated_risk=none|present|blocking + domain_index_status=current|suspected_stale|not_applicable + evidence",
+"missing anchor/file or required target outside domain suggests stale index; do not auto-update; propose sac-onboard delta; material EXECUTE outside domain HALT"
+]
