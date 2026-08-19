@@ -4,7 +4,7 @@
 
 - Design: .context/docs/pendentes/sac_public_extraction/bloco_01_mcp_publico/design.md
 - Approved by: usuário, 2026-08-19 — autorização explícita para ativar o builder
-- Current: track_06
+- Current: track_07
 
 ## Tracks
 
@@ -15,8 +15,8 @@
 | track_03 | Transplante verbatim de src/, mcp/, ci/, docs/ com smoke verde nos dois repositórios | track_02 | APPROVED | 1 |
 | track_04 | Superfície MCP única e SSOT de versão em mcp/package.json, anunciando 0.1.0 | track_03 | APPROVED | 1 |
 | track_05 | Manifesto owned em .sac/domains.md, template managed, matriz de estados antigos fechada | track_04 | APPROVED | 1 |
-| track_06 | gates_bypassed no payload e terceira classe de erro sac.environment.* | track_05 | EXECUTED | 1 |
-| track_07 | install.py stdlib-only que nunca sobrescreve owned, e quickstart executável | track_06 | PENDING | 0 |
+| track_06 | gates_bypassed no payload e terceira classe de erro sac.environment.* | track_05 | APPROVED | 1 |
+| track_07 | install.py stdlib-only que nunca sobrescreve owned, e quickstart executável | track_06 | EXECUTED | 1 |
 | track_08 | Três skills públicas sem caminho de máquina e sem gatilho ambíguo, mais GOVERNANCE | track_07 | PENDING | 0 |
 | track_09 | CI pública que aceita PR de fork sem segredo, sem pull_request_target, sem diff-check | track_08 | PENDING | 0 |
 | track_10 | RELEASE_GATE.md, promessa honesta no README e tag 0.1.0-rc | track_09 | PENDING | 0 |
@@ -57,3 +57,8 @@ Append entries; never rewrite history.
 - Date: 2026-08-19
 - Status: EXECUTED
 - Outcome: Atestação explícita de `gates_bypassed` implementada em Python (`src/sac_domains.py`, `src/sac_engine.py`, `src/sac_scan.py`) para os 3 escapes (`SAC_ALLOW_UNSCOPED`, `SAC_ALLOW_FILEPATH_OUTSIDE_DOMAINS`, `SAC_ALLOW_HOP1_FULL_SCAN`) com inclusão da lista de env vars ativas e warnings dedicados (`Gate bypassed by environment override: <VAR>`), e omissão estrita do campo quando nenhum escape estiver ativo (custo zero de bytes). Terceira classe de erro da CLI unificada com emissão de JSON estruturado em stdout (`code: sac.environment.*`, exit code 2) via `SacArgumentParser` (`sac.environment.invalid_arguments`) e `validate_root` (`sac.environment.root_not_found`, `sac.environment.root_not_directory`). Adapter Node MCP (`mcp/server.mjs`) atualizado para mapear erros de ambiente para `sac.environment_error` e propagar structured JSON da CLI sem fallback para `lookup_failed`/`context_failed`. Smoke test estendido em `mcp/smoke.mjs` cobrindo todos os cenários de escapes (on/off), erros de ambiente e paridade estrita CLI ≡ MCP 100% verde. Gates de higiene e versão validados com sucesso.
+
+### track_07 — Attempt 1
+- Date: 2026-08-19
+- Status: EXECUTED
+- Outcome: Instalador universal `install.py` implementado na raiz em 100% Python stdlib (sem dependências de terceiros). Verificação rígida de runtimes para Python >= 3.11 e Node.js >= 22 com falhas explícitas nomeadas (`sac.installer.*`). Gerenciamento estrito de `owned` vs `managed` garantindo inicialização de `.sac/domains.md` a partir de `templates/domains.template.md` quando ausente e preservação 100% byte a byte (SHA-256 idêntico) de manifestos pré-existentes. Emissão clara de bloco JSON para host MCP sem jamais editar arquivos de configuração do host automaticamente. `README.md` criado na raiz com apresentação, os 3 princípios fundamentais do SAC e quickstart executável em 5 passos sem promessas infladas de prevenção de regressão. `docs/INSTALL.md` criado com guia abrangente de instalação, opções de CLI e troubleshooting. Suíte completa de verificação dos 6 DoDs em `ci/test_track_07_dod.py` 100% aprovada, `node mcp/smoke.mjs` 100% verde, `check_hygiene.py` e `check_version.py` validados.
