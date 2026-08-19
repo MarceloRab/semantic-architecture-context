@@ -37,10 +37,18 @@ if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($gitRoot)) {
 }
 
 # Resolve the script location so it works regardless of invocation directory.
-# The script lives at <repoRoot>/sac-context/ci/sac_ci_guard.ps1.
+# The script lives at <repoRoot>/ci/sac_ci_guard.ps1.
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$repoRoot = Split-Path -Parent (Split-Path -Parent $scriptDir)
-$scanner = Join-Path $repoRoot "sac-context" "src" "sac_scan.py"
+$repoRoot = Split-Path -Parent $scriptDir
+$scanner = Join-Path $repoRoot "src" "sac_scan.py"
+if (-not (Test-Path $scanner)) {
+    $repoRootLegacy = Split-Path -Parent $repoRoot
+    $scannerLegacy = Join-Path $repoRootLegacy "sac-context" "src" "sac_scan.py"
+    if (Test-Path $scannerLegacy) {
+        $repoRoot = $repoRootLegacy
+        $scanner = $scannerLegacy
+    }
+}
 
 if (-not (Test-Path $scanner)) {
     Write-Error "SAC scanner not found: $scanner"

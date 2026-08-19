@@ -208,7 +208,7 @@ def _build_parser() -> SacArgumentParser:
 
     index_parser = subparsers.add_parser(
         "index-build",
-        help="Build sac-context/.sac/symbol_index.json for hop1 lookups.",
+        help="Build .sac/symbol_index.json for hop1 lookups.",
     )
     index_parser.add_argument(
         "--root",

@@ -26,6 +26,7 @@ EXCLUDED_PATHSPECS = [
     ":!AUDIT.md",
     ":!docs",
     ":!.github/workflows/hygiene.yml",
+    ":!.github/workflows/ci.yml",
     ":!.github/scripts/check_hygiene.py",
 ]
 

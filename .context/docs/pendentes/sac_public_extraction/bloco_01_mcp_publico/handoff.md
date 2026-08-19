@@ -4,7 +4,7 @@
 
 - Design: .context/docs/pendentes/sac_public_extraction/bloco_01_mcp_publico/design.md
 - Approved by: usuário, 2026-08-19 — autorização explícita para ativar o builder
-- Current: track_08
+- Current: track_09
 
 ## Tracks
 
@@ -17,8 +17,8 @@
 | track_05 | Manifesto owned em .sac/domains.md, template managed, matriz de estados antigos fechada | track_04 | APPROVED | 1 |
 | track_06 | gates_bypassed no payload e terceira classe de erro sac.environment.* | track_05 | APPROVED | 1 |
 | track_07 | install.py stdlib-only que nunca sobrescreve owned, e quickstart executável | track_06 | APPROVED | 1 |
-| track_08 | Três skills públicas sem caminho de máquina e sem gatilho ambíguo, mais GOVERNANCE | track_07 | EXECUTED | 1 |
-| track_09 | CI pública que aceita PR de fork sem segredo, sem pull_request_target, sem diff-check | track_08 | PENDING | 0 |
+| track_08 | Três skills públicas sem caminho de máquina e sem gatilho ambíguo, mais GOVERNANCE | track_07 | APPROVED | 1 |
+| track_09 | CI pública que aceita PR de fork sem segredo, sem pull_request_target, sem diff-check | track_08 | EXECUTED | 1 |
 | track_10 | RELEASE_GATE.md, promessa honesta no README e tag 0.1.0-rc | track_09 | PENDING | 0 |
 
 Status: `PENDING` -> `EXECUTED` | `FAILED` | `REPLAN` -> `APPROVED` | `CHANGES_REQUIRED` | `REPLAN`.
@@ -67,4 +67,10 @@ Append entries; never rewrite history.
 - Date: 2026-08-19
 - Status: EXECUTED
 - Outcome: Publicação das 3 skills públicas (`skills/sac-context/`, `skills/sac-onboard/`, `skills/sac-execution-overlay/`) com resolução relativa (`./PROMPT.md`, `./SKILL.md`), 100% livres de caminhos de máquina e menções ao monorepo privado. Desambiguação de frontmatters comprovada (`sac-context` para gramática e sintaxe de tags; `sac-execution-overlay` para gate cirúrgico de execução). `sac-evolution` excluída e substituída por `GOVERNANCE.md` (modelo Issue -> ADR -> PR -> Review), `CONTRIBUTING.md` e diretório `docs/adr/` com template de ADRs. `prompt_resumido.md` preservado e sanitizado. Todos os 5 critérios do DoD verificados, `check_hygiene.py`, `check_version.py` e `node mcp/smoke.mjs` 100% aprovados.
+
+### track_09 — Attempt 1
+- Date: 2026-08-19
+- Status: EXECUTED
+- Outcome: Pipeline de CI pública implementado em `.github/workflows/ci.yml` configurado para executar em `push` e `pull_request` (sem `pull_request_target`), com permissão explícita no topo `permissions: contents: read`, sem segredos e com limites determinísticos `timeout-minutes: 10` em todos os jobs. Matriz de runtime completa cobrindo Python (3.11, 3.12, 3.13) × Node (22, 24) para os jobs de higiene (`check_hygiene.py`, `check_version.py`), validação (`validate`, `index-build`) e smoke (`npm --prefix mcp ci`, `node mcp/smoke.mjs`, `ci/test_track_07_dod.py`, `ci/test_track_09_dod.py`). Zero ocorrências de `pull_request_target`, zero interpolações `${{ }}` em comandos `run:`, zero `continue-on-error` e zero jobs de `diff-check` (D14). Script local `ci/sac_ci_guard.ps1` e template `ci/sac_guard.yml` harmonizados para o layout atual do repositório. Suíte de verificação automatizada `ci/test_track_09_dod.py` criada e validando 100% dos 6 critérios do DoD.
+
 

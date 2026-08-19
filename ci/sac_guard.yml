@@ -12,6 +12,7 @@ jobs:
   sac-guard:
     name: Semantic Architecture Context guard
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout PR branch with full history
         uses: actions/checkout@v4
@@ -25,15 +26,16 @@ jobs:
 
       - name: Build SAC symbol index (hop1)
         run: |
-          python sac-context/src/sac_scan.py index-build --root .
+          python src/sac_scan.py index-build --root .
         # Generated artifact (not committed). Regenerates hop1 index for this job.
-        # Local freshness gate: python sac-context/src/sac_scan.py index-build --check --root .
+        # Local freshness gate: python src/sac_scan.py index-build --check --root .
 
       - name: Run SAC diff-check
         env:
           SAC_PR_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BASE_REF: ${{ github.base_ref }}
         run: |
-          python sac-context/src/sac_scan.py diff-check --base origin/${{ github.base_ref }}
+          python src/sac_scan.py diff-check --base origin/$GITHUB_BASE_REF
         # Exit code is propagated:
         #   0 = no REGR violation or all changed symbols are covered/ACKed.
         #   1 = a SAC:REGR target was changed without coverage and without SAC-ACK.
@@ -46,7 +48,7 @@ jobs:
 
       - name: Run SAC validate
         run: |
-          python sac-context/src/sac_scan.py validate --root . --warning-only
+          python src/sac_scan.py validate --root . --warning-only
         # Warning-only by default (VAL-2). Remove --warning-only to hard-fail
         # after tree-sitter is installed and the project has 0 orphans.
         #

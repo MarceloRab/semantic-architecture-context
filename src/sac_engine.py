@@ -69,7 +69,8 @@ _IGNORE_DIRS = frozenset(
     }
 )
 
-_SYMBOL_INDEX_REL = os.path.join("sac-context", ".sac", "symbol_index.json")
+_SYMBOL_INDEX_REL = os.path.join(".sac", "symbol_index.json")
+_SYMBOL_INDEX_LEGACY_REL = os.path.join("sac-context", ".sac", "symbol_index.json")
 _DEFAULT_WARNINGS_CAP = 20
 
 # Default extensions scanned for SAC tags.
@@ -700,7 +701,11 @@ def _tags_from_symbol_index(index: dict) -> list[SacTag]:
 def load_symbol_index(root: str) -> dict | None:
     path = symbol_index_path(root)
     if not os.path.isfile(path):
-        return None
+        legacy_path = os.path.normpath(os.path.join(root, _SYMBOL_INDEX_LEGACY_REL))
+        if os.path.isfile(legacy_path):
+            path = legacy_path
+        else:
+            return None
     try:
         with open(path, "r", encoding="utf-8") as fh:
             data = json.load(fh)

@@ -1,6 +1,6 @@
 # Semantic Architecture Context (SAC)
 
-[![Hygiene Gate](https://github.com/semantic-architecture-context/semantic-architecture-context/actions/workflows/hygiene.yml/badge.svg)](https://github.com/semantic-architecture-context/semantic-architecture-context/actions/workflows/hygiene.yml)
+[![CI](https://github.com/semantic-architecture-context/semantic-architecture-context/actions/workflows/ci.yml/badge.svg)](https://github.com/semantic-architecture-context/semantic-architecture-context/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Node 22+](https://img.shields.io/badge/node-22+-green.svg)](https://nodejs.org/)
