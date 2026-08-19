@@ -90,3 +90,7 @@ jobs:
 
       - name: Run Track 09 DoD test suite
         run: python ci/test_track_09_dod.py
+
+      - name: Run Track 10 DoD test suite
+        run: python ci/test_track_10_dod.py
+

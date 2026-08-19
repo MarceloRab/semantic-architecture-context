@@ -4,7 +4,7 @@
 
 - Design: .context/docs/pendentes/sac_public_extraction/bloco_01_mcp_publico/design.md
 - Approved by: usuário, 2026-08-19 — autorização explícita para ativar o builder
-- Current: track_09
+- Current: track_10
 
 ## Tracks
 
@@ -18,8 +18,9 @@
 | track_06 | gates_bypassed no payload e terceira classe de erro sac.environment.* | track_05 | APPROVED | 1 |
 | track_07 | install.py stdlib-only que nunca sobrescreve owned, e quickstart executável | track_06 | APPROVED | 1 |
 | track_08 | Três skills públicas sem caminho de máquina e sem gatilho ambíguo, mais GOVERNANCE | track_07 | APPROVED | 1 |
-| track_09 | CI pública que aceita PR de fork sem segredo, sem pull_request_target, sem diff-check | track_08 | EXECUTED | 1 |
-| track_10 | RELEASE_GATE.md, promessa honesta no README e tag 0.1.0-rc | track_09 | PENDING | 0 |
+| track_09 | CI pública que aceita PR de fork sem segredo, sem pull_request_target, sem diff-check | track_08 | APPROVED | 1 |
+| track_10 | RELEASE_GATE.md, promessa honesta no README e tag 0.1.0-rc | track_09 | EXECUTED | 1 |
+
 
 Status: `PENDING` -> `EXECUTED` | `FAILED` | `REPLAN` -> `APPROVED` | `CHANGES_REQUIRED` | `REPLAN`.
 Execution writes its own row status and attempt number. Review writes the post-verdict status and moves `Current` on `APPROVED`. Nobody edits another row.
@@ -72,5 +73,11 @@ Append entries; never rewrite history.
 - Date: 2026-08-19
 - Status: EXECUTED
 - Outcome: Pipeline de CI pública implementado em `.github/workflows/ci.yml` configurado para executar em `push` e `pull_request` (sem `pull_request_target`), com permissão explícita no topo `permissions: contents: read`, sem segredos e com limites determinísticos `timeout-minutes: 10` em todos os jobs. Matriz de runtime completa cobrindo Python (3.11, 3.12, 3.13) × Node (22, 24) para os jobs de higiene (`check_hygiene.py`, `check_version.py`), validação (`validate`, `index-build`) e smoke (`npm --prefix mcp ci`, `node mcp/smoke.mjs`, `ci/test_track_07_dod.py`, `ci/test_track_09_dod.py`). Zero ocorrências de `pull_request_target`, zero interpolações `${{ }}` em comandos `run:`, zero `continue-on-error` e zero jobs de `diff-check` (D14). Script local `ci/sac_ci_guard.ps1` e template `ci/sac_guard.yml` harmonizados para o layout atual do repositório. Suíte de verificação automatizada `ci/test_track_09_dod.py` criada e validando 100% dos 6 critérios do DoD.
+
+### track_10 — Attempt 1
+- Date: 2026-08-19
+- Status: EXECUTED
+- Outcome: `RELEASE_GATE.md` criado na raiz enumerando nominalmente as 9 tracks/itens do Bloco 02 com caixas de verificação vazias `[ ]` como critérios obrigatórios para a liberação da tag final `0.1.0`. `README.md` atualizado estabelecendo formalmente a promessa honesta de **co-edit gate** (verificador lexical de co-edição no diff e não prova formal de teste) e declarando as linguagens com suporte ativo hoje (`.dart`, `.ps1`) como limitação conhecida até a entrega poliglota do Bloco 02, com zero ocorrências de reivindicações infundadas de prevenção de regressão. `CHANGELOG.md` criado documentando a release candidate `0.1.0-rc` e consolidando as entregas do Bloco 01. Tag anotada `0.1.0-rc` criada no Git (sem criação da tag `0.1.0`). Suíte de teste automatizada `ci/test_track_10_dod.py` criada validando todos os 5 DoDs, e gates de higiene, versão e smoke 100% verdes.
+
 
 

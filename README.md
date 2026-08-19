@@ -93,10 +93,34 @@ Reinicie seu host MCP. O agente agora pode invocar:
 
 ---
 
+## Mecanismo de Verificação: Co-Edit Gate
+
+O SAC utiliza um **co-edit gate** como modelo de verificação estática. Quando uma tag `SAC:REGR` define alvos em `verify: [TargetA, TargetB]`, o verificador lexical do SAC checa se os arquivos e símbolos associados foram co-editados na mesma alteração (diff).
+
+> [!NOTE]
+> O co-edit gate é um verificador léxico e determinístico de co-edição de alvos declarados. Ele **não** constitui execução de testes dinâmicos ou garantia formal em runtime, atuando como uma guarda estática de escopo e rastreabilidade para agentes e desenvolvedores.
+
+---
+
+## Suporte de Linguagens e Limitações Atuais
+
+Na versão corrente (`0.1.0-rc`), o SAC possui suporte ativo para:
+- **`.dart`** (comentários `// SAC:`)
+- **`.ps1`** (comentários `# SAC:`)
+
+Esta é uma limitação técnica conhecida do Bloco 01. O registro formal de suporte poliglota (`.py`, `.js`, `.ts`, `.go`) e o endurecimento do parser de cláusulas estão mapeados no [Release Gate](RELEASE_GATE.md) como requisitos obrigatórios para a tag final `0.1.0` no Bloco 02.
+
+---
+
 ## Documentação Adicional
 
+- [Release Gate (Critérios para Tag 0.1.0)](RELEASE_GATE.md)
+- [Changelog e Histórico de Releases](CHANGELOG.md)
 - [Guia Detalhado de Instalação](docs/INSTALL.md)
 - [Especificação Operacional SAC v2](docs/SAC_V2.md)
 - [Template de Domínios](templates/domains.template.md)
+- [Governança Aberta](GOVERNANCE.md)
+- [Guia de Contribuição](CONTRIBUTING.md)
 - [Código de Conduta](CODE_OF_CONDUCT.md)
 - [Licença MIT](LICENSE)
+
