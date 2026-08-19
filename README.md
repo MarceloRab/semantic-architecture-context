@@ -9,16 +9,29 @@
 
 ---
 
-## 3 Princípios do SAC
+## 3 Princípios Fundamentais do SAC
 
-1. **Locality & Zero-Cost Discovery (Pilar do Código)**
-   Contratos e invariantes arquiteturais vivem colados nas declarações de funções, classes e módulos. Qualquer agente de IA ou desenvolvedor humano que abra o arquivo recebe imediatamente o contexto arquitetural relevante, sem depender de ferramentas proprietárias.
+1. **Compacto e Orientado a Orçamento (Token Economy — SAC-PR1)**
+   Uma única linha por restrição (`SAC:ARCH`, `SAC:REGR`, `SAC:DEPRECATED`). Informação semântica cirúrgica que cabe no orçamento de token de qualquer modelo de IA, sem gerar ruído nem inflar o payload da janela de contexto.
 
-2. **Bounded Scope & Token Economy (Roteamento Delimitado)**
-   Varreduras globais de repositório consomem dezenas de milhares de tokens e geram ruído. O SAC organiza projetos em domínios semânticos compactos (`.sac/domains.md`), permitindo descoberta cirúrgica em quatro camadas estruturadas: **Route** (`list_sac_domains`), **Context** (`get_sac_context`), **Verify** (`get_sac_constraints`) e **Discover** (`discover_sac`).
+2. **Normatizado com Vocabulário Fechado e Executável (SAC-PR2)**
+   Sem regras vagas ou prosa solta em documentações esquecidas. O SAC utiliza imperativos formais (`MUST`, `NEVER`, `ONLY`, `DEVE`, `NUNCA`) e condições explícitas (`on=ssot`, `on=ordering`, `verify:`), permitindo validação e parsing determinísticos sem suposições heurísticas.
 
-3. **Determinismo Estrito & Paridade Idêntica**
-   Zero fallback silencioso, zero suposição ou heurística fraca. O servidor MCP Node é um adaptador estrito sobre o engine Python, garantindo 100% de paridade de payloads e mensagens de erro estruturadas (`sac.environment.*`). Manifestos do usuário (`.sac/domains.md`) são estritamente `owned` e nunca são sobrescritos ou mesclados pelo ferramental.
+3. **Benefício ao Agente Cego & Degradação Graciosa (Blind-Agent Utility — SAC-PR3)**
+   **O grande diferencial**: os invariantes residem no próprio código-fonte, imediatamente acima do símbolo que protegem. O agente de IA ou desenvolvedor humano que lê o arquivo diretamente no editor ou via `grep` recebe exatamente o mesmo contrato semântico que o agente conectado via MCP. O servidor MCP orçamenta e acelera o roteamento, mas **nunca entrega menos informação do que a leitura direta da linha crua**.
+
+---
+
+## Como o Agente Opera (Com e Sem MCP)
+
+* **Com Servidor MCP Ativo**: O assistente descobre domínios via `list_sac_domains`, obtém overlays compactos via `get_sac_context` e consulta contratos cirúrgicos via `get_sac_constraints` com controle estrito de orçamento de bytes e resolução de dependências de 1º salto (*hop1*).
+* **Sem MCP (Caminho Degradado / Agente Cego)**:
+  1. O agente lê o manifesto [`.sac/domains.md`](.sac/domains.md) para identificar os domínios e seus arquivos delimitadores (`files:`).
+  2. Localiza restrições cirúrgicas no terminal com um simples filtro:
+     ```bash
+     grep -n "SAC:" src/seu_modulo.py
+     ```
+  3. Respeita os imperativos declarados na linha comentada antes de gerar qualquer diff.
 
 ---
 
