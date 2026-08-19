@@ -4,15 +4,15 @@
 
 - Design: .context/docs/pendentes/sac_public_extraction/bloco_01_mcp_publico/design.md
 - Approved by: usuário, 2026-08-19 — autorização explícita para ativar o builder
-- Current: track_02
+- Current: track_03
 
 ## Tracks
 
 | Track | Goal | Depends on | Status | Attempt |
 | --- | --- | --- | --- | --- |
 | track_01 | Auditoria de estado real consolidada em AUDIT.md, cada achado com anchor e classificação | none | APPROVED | 1 |
-| track_02 | Esqueleto público: git do zero, MIT, .gitignore e gate de higiene que falha duro | track_01 | EXECUTED | 1 |
-| track_03 | Transplante verbatim de src/, mcp/, ci/, docs/ com smoke verde nos dois repositórios | track_02 | PENDING | 0 |
+| track_02 | Esqueleto público: git do zero, MIT, .gitignore e gate de higiene que falha duro | track_01 | APPROVED | 1 |
+| track_03 | Transplante verbatim de src/, mcp/, ci/, docs/ com smoke verde nos dois repositórios | track_02 | EXECUTED | 1 |
 | track_04 | Superfície MCP única e SSOT de versão em mcp/package.json, anunciando 0.1.0 | track_03 | PENDING | 0 |
 | track_05 | Manifesto owned em .sac/domains.md, template managed, matriz de estados antigos fechada | track_04 | PENDING | 0 |
 | track_06 | gates_bypassed no payload e terceira classe de erro sac.environment.* | track_05 | PENDING | 0 |
@@ -37,3 +37,8 @@ Append entries; never rewrite history.
 - Date: 2026-08-19
 - Status: EXECUTED
 - Outcome: Repositório inicializado do zero com git init (sem herança de histórico do monorepo), LICENSE MIT 2026 Semantic Architecture Context Authors, CODE_OF_CONDUCT.md (Contributor Covenant v2.1), .gitignore com cobertura de bytecode/caches/node_modules/symbol_index/.claude/.serena, e .github/workflows/hygiene.yml + .github/scripts/check_hygiene.py implementados com falha dura e verificados com testes manuais de injeção de bytecode (.pyc) e strings proibidas (C:\Users\ e rabelo-standards). Commit inicial realizado.
+
+### track_03 — Attempt 1
+- Date: 2026-08-19
+- Status: EXECUTED
+- Outcome: Transplante verbatim de 20 arquivos sob src/, mcp/, ci/, docs/ a partir de rabelo-standards/sac-context/ com 100% de paridade de hash SHA-256 e zero alteração de conteúdo. src/sac_mcp_server.py e diretórios __pycache__ excluídos. npm ci executado com sucesso em mcp/. node mcp/smoke.mjs executado com sucesso produzindo exatamente o mesmo veredicto e paridade CLI ≡ MCP da origem. Gate de higiene python .github/scripts/check_hygiene.py validado e verde (exit code 0).

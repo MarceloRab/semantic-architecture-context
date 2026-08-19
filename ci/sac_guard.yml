@@ -1,0 +1,55 @@
+name: SAC Guard
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  sac-guard:
+    name: Semantic Architecture Context guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build SAC symbol index (hop1)
+        run: |
+          python sac-context/src/sac_scan.py index-build --root .
+        # Generated artifact (not committed). Regenerates hop1 index for this job.
+        # Local freshness gate: python sac-context/src/sac_scan.py index-build --check --root .
+
+      - name: Run SAC diff-check
+        env:
+          SAC_PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          python sac-context/src/sac_scan.py diff-check --base origin/${{ github.base_ref }}
+        # Exit code is propagated:
+        #   0 = no REGR violation or all changed symbols are covered/ACKed.
+        #   1 = a SAC:REGR target was changed without coverage and without SAC-ACK.
+        #   2 = usage or I/O error.
+        #
+        # To override a specific symbol, include the exact line below in the PR
+        # body or in a commit message:
+        #   SAC-ACK: <symbol_name>
+        # The token "SAC-ACK: all" is ignored (per-project override is prohibited).
+
+      - name: Run SAC validate
+        run: |
+          python sac-context/src/sac_scan.py validate --root . --warning-only
+        # Warning-only by default (VAL-2). Remove --warning-only to hard-fail
+        # after tree-sitter is installed and the project has 0 orphans.
+        #
+        # To ACK an orphan symbol, add a comment on its line with:
+        #   SAC-ACK: <symbol_name>
+        # and the tag will be considered covered.

@@ -1,0 +1,18 @@
+{
+  "name": "sac-mcp-node",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Thin Node MCP stdio adapter for SAC — delegates lookup to Python CLI (SSOT).",
+  "scripts": {
+    "start": "node server.mjs",
+    "smoke": "node smoke.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "3.25.76"
+  }
+}

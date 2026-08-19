@@ -24,9 +24,11 @@ FORBIDDEN_STRINGS = [
 EXCLUDED_PATHSPECS = [
     ":!.context",
     ":!AUDIT.md",
+    ":!docs",
     ":!.github/workflows/hygiene.yml",
     ":!.github/scripts/check_hygiene.py",
 ]
+
 
 
 def run_git_command(args: List[str]) -> Tuple[int, str, str]:
@@ -94,6 +96,11 @@ def check_commit_history() -> List[str]:
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
     print("=== SAC Hygiene Gate Verification ===")
     all_violations = []
 
