@@ -17,7 +17,7 @@ Cada achado auditado possui um identificador estável (`A01` a `A28`), anchor `a
 | ID | Achado / Defeito | Anchor Principal | Classificação | Trilha Responsável / Destino |
 |---|---|---|---|---|
 | **A01** | Manifesto `owned` dentro da árvore `managed` | `src/sac_domains.py:14` | `corrigir antes da extração` | Bloco 01 Track 05 |
-| **A02** | Segunda superfície MCP não-gated e com dep externa (`FastMCP`) | `src/sac_mcp_server.py:1-48` | `corrigir antes da extração` | Bloco 01 Track 04 |
+| **A02** | Segunda superfície MCP não-gated e com dep externa (legado) | Histórico de extração (`src/` legado) | `corrigir antes da extração` | Bloco 01 Track 04 |
 | **A03** | Layer A de testes unitários inexistente (Layer A = 0) | `test_*.py` sob `sac-context/`: zero | `corrigir antes da 0.1.0` | Bloco 02 Tracks 01, 04, 05 |
 | **A04** | `_perf.payload_bytes` sub-relata 23,9% | `mcp/server.mjs:291` vs `:266` | `corrigir antes da 0.1.0` | Bloco 02 Track 06 |
 | **A05** | Unidade de orçamento 1,215x divergente (compacto vs indent=1) | `src/sac_engine.py:636` vs `src/sac_scan.py:444` | `corrigir antes da 0.1.0` | Bloco 02 Track 06 |
@@ -34,7 +34,7 @@ Cada achado auditado possui um identificador estável (`A01` a `A28`), anchor `a
 | **A16** | Caminho absoluto de máquina em artefatos de atalho de skill | `skills/.../sac-onboard/prompt_resumido.md:1`, `PROMPT.md:1` | `corrigir antes da extração` | Bloco 01 Track 08 |
 | **A17** | Colisão de gatilho no frontmatter de `sac-context` e `sac-execution-overlay` | `skills/.../sac-context/SKILL.md:3` vs `sac-execution-overlay/SKILL.md:3` | `corrigir antes da extração` | Bloco 01 Track 08 |
 | **A18** | CI executando parsing sobre corpo de PR de fork | `ci/sac_guard.yml:34` | `corrigir antes da extração` | Bloco 01 Track 09 |
-| **A19** | Inventário de superfícies MCP (duas superfícies existentes) | `mcp/server.mjs` e `src/sac_mcp_server.py` | `corrigir antes da extração` | Bloco 01 Track 04 |
+| **A19** | Inventário de superfícies MCP (duas superfícies no legado) | `mcp/server.mjs` e adapter Python legado | `corrigir antes da extração` | Bloco 01 Track 04 |
 | **A20** | Cobertura de teste desbalanceada (Layer A = 0, smoke = Layer B+C) | `test_*.py` (0) vs `mcp/smoke.mjs:1-873` | `corrigir antes da 0.1.0` | Bloco 02 Tracks 01, 04, 05 |
 | **A21** | Eixo linguagem ausente da matriz de compatibilidade | `docs/`, `README.md` | `aceitar e documentar` | Bloco 01 Track 10 / README |
 | **A22** | Proposta de `DIAGNOSE` como cenário-base obrigatório | `src/sac_domains.py:36-38`, `src/sac_engine.py:964,1039` | `aceitar e documentar` | Não-meta (apenas benchmark) |
@@ -62,13 +62,13 @@ Cada achado auditado possui um identificador estável (`A01` a `A28`), anchor `a
 ---
 
 ### A02 — Segunda superfície MCP não-gated e com dependência externa
-- **Anchor:** `src/sac_mcp_server.py:1-48` (`FastMCP("sac")` e import de `mcp.server.fastmcp`).
-- **Sintoma:** Existe um servidor FastMCP Python que chama `sac_engine.lookup` diretamente sem passar por `sac_domains.py`, operando sem checagem de membership, sem PAUSE de `filepath_required`, com `root = os.getcwd()`. Além de divergir semanticamente do adapter Node (`mcp/server.mjs`), quebra a invariante stdlib-only do Python (C1/DP-1).
+- **Anchor:** Adapter Python legado (`mcp.server` legado).
+- **Sintoma:** Existia um servidor MCP Python legado que chamava `sac_engine.lookup` diretamente sem passar por `sac_domains.py`, operando sem checagem de membership, sem PAUSE de `filepath_required`, com `root = os.getcwd()`. Além de divergir semanticamente do adapter Node (`mcp/server.mjs`), quebrava a invariante stdlib-only do Python (C1/DP-1).
 - **Passo de Reprodução:**
-  1. Executar `python src/sac_mcp_server.py` e chamar `get_sac_constraints("sym")` sem `filepath`.
+  1. Executar o servidor MCP Python legado e chamar `get_sac_constraints("sym")` sem `filepath`.
   2. Observar retorno direto de matches sem o PAUSE estruturado exigido pela especificação Route L0/L1.
 - **Classificação:** `corrigir antes da extração`
-- **Trilha Responsável:** **Bloco 01 Track 04** (Deleção de `src/sac_mcp_server.py`, consolidando `mcp/server.mjs` como superfície MCP única).
+- **Trilha Responsável:** **Bloco 01 Track 04** (Remoção do adapter Python legado, consolidando `mcp/server.mjs` como superfície MCP única).
 
 ---
 
@@ -256,10 +256,10 @@ Cada achado auditado possui um identificador estável (`A01` a `A28`), anchor `a
 ---
 
 ### A19 — Inventário de superfícies MCP (duas superfícies existentes)
-- **Anchor:** `mcp/server.mjs` (Node stdio) e `src/sac_mcp_server.py` (Python FastMCP).
+- **Anchor:** `mcp/server.mjs` (Node stdio) e adapter Python legado.
 - **Sintoma:** Existência de dois adapters MCP com contratos e dependências diferentes no mesmo repositório.
 - **Passo de Reprodução:**
-  1. Comparar as ferramentas expostas por `server.mjs` (5 ferramentas com envelopes completos) e `sac_mcp_server.py` (1 ferramenta sem envelopes).
+  1. Comparar as ferramentas expostas por `server.mjs` (5 ferramentas com envelopes completos) e o adapter legado (1 ferramenta sem envelopes).
 - **Classificação:** `corrigir antes da extração`
 - **Trilha Responsável:** **Bloco 01 Track 04** (Eliminação do adapter Python; consolidação de `mcp/server.mjs`).
 

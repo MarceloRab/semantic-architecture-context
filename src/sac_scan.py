@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from pathlib import Path
 import sys
 
 # Make the script runnable both as `python sac-context/src/sac_scan.py` and from the
@@ -37,10 +38,35 @@ from sac_diff import run_diff_check  # noqa: E402
 from sac_validate import validate, render_orphans, Orphan  # noqa: E402
 
 
+def resolve_package_version() -> str:
+    """Resolve project version from mcp/package.json (SSOT).
+
+    Fails explicitly with a descriptive error and exit != 0 if unreadable or invalid.
+    Never falls back to a default version.
+    """
+    pkg_path = Path(__file__).resolve().parent.parent / "mcp" / "package.json"
+    try:
+        with open(pkg_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        version = data.get("version")
+        if not version or not isinstance(version, str) or not version.strip():
+            raise ValueError(f"Invalid or missing 'version' field in {pkg_path}")
+        return version.strip()
+    except Exception as exc:
+        print(f"error: failed to read project version from {pkg_path}: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+
 def _build_parser() -> argparse.ArgumentParser:
+    version = resolve_package_version()
     parser = argparse.ArgumentParser(
         prog="sac_scan",
         description="Semantic Architecture Context (SAC) scanner.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=version,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 

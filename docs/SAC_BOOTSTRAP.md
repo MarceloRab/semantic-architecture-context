@@ -13,7 +13,6 @@ sac-context/
   src/sac_engine.py
   src/sac_scan.py
   src/sac_diff.py
-  src/sac_mcp_server.py   # LEGACY FastMCP — não registrar no Cursor
   src/sac_validate.py
   mcp/server.mjs          # primary MCP stdio (Node)
   mcp/package.json
@@ -50,7 +49,7 @@ Copy-Item sac-context/ci/sac_guard.yml .github/workflows/sac_guard.yml
 
 ## 3. Registrar o MCP SAC (Node primary)
 
-Entry Cursor/stdio = **Node** (`sac-context/mcp/server.mjs`). Tags no código = SSOT; Python CLI = implementação canônica de leitura. FastMCP `sac_mcp_server.py` = LEGACY — não registrar.
+Entry Cursor/stdio = **Node** (`sac-context/mcp/server.mjs`). Tags no código = SSOT; Python CLI = implementação canônica de leitura.
 
 Antes do primeiro uso: `cd sac-context/mcp && npm ci`. Se a IDE não achar `python`, defina `SAC_PYTHON` no `env` do servidor.
 
@@ -148,7 +147,7 @@ Após registrar o servidor Node, na sessão do agente confirme:
 3. Tools listadas: `list_sac_domains`, `get_sac_context`, `discover_sac`, `get_sac_constraints`.
 4. Em domínio resolvido: `get_sac_context(domain_id)` retorna anchors + `REGR`/`DEPRECATED` + hop1 em **&lt; 5s**; `files:` permanece limite de busca, não fila de leitura.
 5. Em símbolo tagueado: `get_sac_constraints(symbol, filepath=<file>)` → `found=true` em **&lt; 5s**.
-6. Respostas MCP v1.6.0+ incluem `_perf.elapsed_ms` e `_perf.payload_bytes` — citar 1 linha no report; não dump JSON.
+6. Respostas MCP incluem `_perf.elapsed_ms` e `_perf.payload_bytes` — citar 1 linha no report; não dump JSON.
 7. Smoke local: `cd sac-context/mcp && npm run smoke`.
 
 Sem smoke verde no host → **BLOQUEIO** documentado; use CLI anunciado; **não** declare feature MCP cumprida.
@@ -176,7 +175,7 @@ Falhas comuns se a tool não listar:
 - `<projeto>/.cursor/mcp.json` neste host Windows.
 - Lookup MCP sem `filepath` → rejeição de schema Zod (`filepath` required).
 - `python` / `SAC_PYTHON` fora do PATH da IDE (adapter spawna CLI).
-- Servidor `sac` ainda apontando para FastMCP LEGACY (`sac_mcp_server.py`).
+- Configuração de MCP apontando para caminho inexistente ou inválido.
 - Servidor `sac` desabilitado na UI MCP.
 
 Ausência de MCP na sessão ≠ inventar comentários; autoriza só degradação anunciada → CLI/`rg` **ou** `NO-GO` conforme a tabela acima. MCP “opcional por desenho” = **proibido**.

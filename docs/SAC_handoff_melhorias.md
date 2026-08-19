@@ -20,19 +20,19 @@ Este handoff registra **bloqueios e decisões** do padrão SAC. O menor caminho 
 
 ## Bloqueio / status — MCP SAC no Cursor (2026-07-19 → atualizado)
 
-### 1. Problema histórico (instabilidade Python FastMCP no Cursor)
+### 1. Problema histórico (instabilidade do adapter Python MCP no Cursor)
 
 **Objetivo da feature:** `get_sac_constraints` via MCP como via **principal** de consulta SAC no agente.
 
-**Evidência no Cursor com FastMCP Python (Windows, 2026-07-19):**
+**Evidência no Cursor com adapter Python MCP (Windows, 2026-07-19):**
 
 - Chamadas MCP falhavam com `Connection closed` / **timeout** (minutos), enquanto o processo Python ficava ocioso (CPU ~0).
 - O mesmo lookup via CLI respondia em ~100–200 ms:
   `python sac-context/src/sac_scan.py lookup <symbol> --root .`
-- Foram observados processos `sac_mcp_server.py` duplicados (pai + filho).
+- Foram observados processos duplicados (pai + filho).
 - `__pycache__/sac_engine.cpython-312.pyc` é só efeito de import — não é a causa.
 
-**Conclusão (histórica):** o **engine é estável**; o caminho **Python FastMCP stdio no Cursor** não era funcional com estabilidade. Isso **quebrava o objetivo** da feature neste host. Não documentar como “opcional por desenho”.
+**Conclusão (histórica):** o **engine é estável**; o caminho **Python MCP stdio no Cursor** não era funcional com estabilidade. Isso **quebrava o objetivo** da feature neste host. Não documentar como “opcional por desenho”.
 
 ### 2. Resolução canônica (implementação no pai)
 
@@ -40,7 +40,7 @@ Este handoff registra **bloqueios e decisões** do padrão SAC. O menor caminho 
 
 1. **SSOT** = engine + CLI (`sac_engine.lookup` / `sac_scan.py lookup --json`).
 2. **Entry Cursor** = adapter Node (`sac-context/mcp/server.mjs`) → spawn CLI; zero parse.
-3. **FastMCP** `sac_mcp_server.py` = **LEGACY/debug only**.
+3. Superfície MCP consolidada exclusivamente no adapter Node.
 4. Engine: `filepath` restringe scan; `ignore_dirs` expandido (T1).
 5. Smoke CLI Node≡CLI: `npm run smoke` / `smoke_sac_mcp_node.ps1` (T2 PASS).
 6. **Cursor smoke host** = gate de COMPLETE (T5) — ainda **pendente**.
@@ -61,7 +61,7 @@ Este handoff registra **bloqueios e decisões** do padrão SAC. O menor caminho 
 
 | Host | MCP stdio suportado? | Estável para SAC **neste ambiente**? | Notas |
 | --- | --- | --- | --- |
-| **Cursor** (FastMCP Python) | Sim (config) | **Não** — evidência 2026-07-19 | Timeout / connection closed (histórico) |
+| **Cursor** (Adapter Python legado) | Sim (config) | **Não** — evidência 2026-07-19 | Timeout / connection closed (histórico) |
 | **Cursor** (Node adapter) | Sim (`~/.cursor/mcp.json` → `node …/server.mjs`) | **PASS** T5 | `user-sac` / `get_sac_constraints` listável; `found=true` em símbolo tagueado; resposta imediata (&lt;5s); sem connection closed |
 | **Codex** | Sim (`~/.codex/config.toml`) | **SKIP** nesta trilha | Preferir Node; smoke não medido |
 | **OpenCode** | Sim (`opencode.json`) | **SKIP** nesta trilha | Preferir Node; smoke não medido |
@@ -132,7 +132,7 @@ Detalhes e DoD: [`SAC_report_melhoria_sac_onboard_injection.md`](SAC_report_melh
 | Data | Nota |
 | --- | --- |
 | 2026-07-19 | Limpeza: handoff focado em função + bloqueio MCP Cursor; status Codex/OpenCode; recomendação SSOT CLI + smoke por host |
-| 2026-07-19 | T3: Node primary documentado; FastMCP LEGACY; Cursor smoke permanece gate T5 |
+| 2026-07-19 | T3: Node primary documentado; adapter legado descontinuado; Cursor smoke permanece gate T5 |
 | 2026-07-19 | T5: Cursor Node MCP PASS (`~/.cursor/mcp.json`); Codex/OpenCode SKIP |
 | 2026-07-24 | Seção 4: INJECTION-GATE, lookup CLI bounded pré-onboard e warning `UNMAPPED_ANCHOR_SYMBOL` |
 | 2026-08-15 | Seção 5: Recomendações de evolução — Validação estática de símbolos `MUST verify:` no CLI/CI e diretriz canônica Zero-MCP |

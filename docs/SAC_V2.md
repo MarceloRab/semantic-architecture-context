@@ -403,7 +403,7 @@ Registrar em **`C:\Users\Rabelo\.cursor\mcp.json`**, `args` apontando para o `se
 - `SAC_ROOT` opcional — inferido pelo path de `server.mjs`.
 - Ao trocar de filho ativo: atualizar `args` antes de editar código tagueado.
 
-**Proibido (SAC-MCP-01):** `args` de um filho enquanto workspace é outro; `<FILHO>/.cursor/mcp.json` neste host; FastMCP LEGACY; MCP OK sem smoke.
+**Proibido (SAC-MCP-01):** `args` de um filho enquanto workspace é outro; `<FILHO>/.cursor/mcp.json` neste host; MCP OK sem smoke.
 
 **Preferência:** global + path absoluto + `npm ci` no filho. Evidência T5: [`SAC_handoff_melhorias.md`](SAC_handoff_melhorias.md).
 
@@ -435,7 +435,7 @@ Detalhe operacional: [`SAC_BOOTSTRAP.md`](SAC_BOOTSTRAP.md).
 
 ## Registro MCP (contrato)
 
-**Contrato (MCP-1…9):** entry Cursor/stdio = **Node** (`sac-context/mcp/server.mjs`); tags no código = SSOT; Python CLI = implementação canônica de leitura/montagem; adapter Node = zero parse; FastMCP `sac_mcp_server.py` = **LEGACY/debug only** — não registrar como primary. Feature MCP só é cumprida com **smoke verde** no host (tools listáveis + chamadas &lt; 5s). Sem smoke → BLOQUEIO documentado + CLI anunciado; **proibido** rebaixar MCP a “opcional por desenho” ou inventar tags.
+**Contrato (MCP-1…9):** entry Cursor/stdio = **Node** (`sac-context/mcp/server.mjs`); tags no código = SSOT; Python CLI = implementação canônica de leitura/montagem; adapter Node = zero parse. Feature MCP só é cumprida com **smoke verde** no host (tools listáveis + chamadas &lt; 5s). Sem smoke → BLOQUEIO documentado + CLI anunciado; **proibido** rebaixar MCP a “opcional por desenho” ou inventar tags.
 
 Pré-requisito Node: `cd sac-context/mcp && npm ci`. Env: `SAC_ROOT` = raiz do **workspace ativo**; opcional `SAC_PYTHON`.
 
@@ -492,10 +492,7 @@ args = ["./sac-context/mcp/server.mjs"]
 env = { SAC_ROOT = "." }
 ```
 
-### LEGACY (não usar no Cursor)
-
-`python …/sac-context/src/sac_mcp_server.py` (FastMCP) permanece no repo só para debug. Não é entry de host.
-
+### MCP Tools
 Tools: `list_sac_domains` (Route) + `get_sac_context(domain_id)` (overlay em lote) + `discover_sac(domain_id)` (inspeção) + `get_sac_constraints(symbol_name, filepath?, domain_id?)` (Verify preciso) + `assess_sac_capillarity(domain_id)` (capillarity on-demand; nunca boot). `filepath` omitido → `filepath_required` PAUSE. JSON de máquina idêntico ao CLI; `_perf` é envelope exclusivo do MCP.
 
 ## CI Guard
@@ -620,7 +617,6 @@ Capillarity **pós** TAG_DELTA: somente verificação; FAIL → report + HALT; *
 - `sac-context/src/sac_diff.py` — diff engine.
 - `sac-context/src/sac_validate.py` — validação AST (tree-sitter Dart + ast Python).
 - `sac-context/mcp/server.mjs` — adaptador MCP stdio Node (primary Cursor).
-- `sac-context/src/sac_mcp_server.py` — FastMCP LEGACY/debug only.
 - `sac-context/ci/sac_guard.yml` — template GitHub Actions.
 - `sac-context/ci/sac_ci_guard.ps1` — wrapper local.
 - `sac-context/docs/SAC_validate.md` — operacionalidade e critérios de avaliação.

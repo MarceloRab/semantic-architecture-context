@@ -20,10 +20,10 @@ O código do SAC existe em `semantic-architecture-context` com comportamento **i
 
 ## Semantic authority
 
-- Must: copiar `src/` (exceto `sac_mcp_server.py` e exceto `__pycache__/`), `mcp/`, `ci/`, `docs/` para a raiz do repositório de destino, preservando a estrutura de diretórios relativa.
+- Must: copiar `src/` (exceto adapter Python legado e exceto `__pycache__/`), `mcp/`, `ci/`, `docs/` para a raiz do repositório de destino, preservando a estrutura de diretórios relativa.
 - Must: **zero** alteração de comportamento nesta track. O diff é movimentação de arquivos e as duas exclusões declaradas, nada mais.
 - Must not: renomear símbolo, corrigir defeito conhecido, atualizar versão, mexer em caminho hardcoded, formatar código, remover código morto, ou compartilhar commit com qualquer outra track.
-- Must not: copiar `src/__pycache__/` (4 `.pyc` rastreados contendo `C:\Users\Rabelo\projects\rabelo-standards\...`) nem `src/sac_mcp_server.py`.
+- Must not: copiar `src/__pycache__/` (4 `.pyc` rastreados contendo `C:\Users\Rabelo\projects\rabelo-standards\...`) nem adapter Python legado.
 - Error behavior: se o smoke falhar no destino, a causa é investigada e corrigida como problema de transplante (caminho, encoding, permissão), nunca como ajuste de comportamento do engine. Se a causa for comportamental, parar.
 
 ## Required approach
@@ -44,7 +44,7 @@ O código do SAC existe em `semantic-architecture-context` com comportamento **i
 ## DoD
 
 1. `mcp/smoke.mjs` executado na origem e no destino produz o mesmo veredicto. | Proof: manual (saídas das duas execuções, comparadas)
-2. `src/sac_mcp_server.py` e `src/__pycache__/` não existem no destino. | Proof: inspect
+2. Adapter Python legado e `src/__pycache__/` não existem no destino. | Proof: inspect
 3. O diff da track contém apenas adição de arquivos copiados; nenhuma linha de conteúdo difere da origem para os arquivos copiados. | Proof: diff
 4. O workflow de higiene de track_02 passa sobre a árvore copiada. | Proof: manual
 5. Nenhum commit desta track contém alteração de outra track. | Proof: diff

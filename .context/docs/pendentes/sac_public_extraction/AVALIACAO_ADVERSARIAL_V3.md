@@ -44,9 +44,9 @@ sac-context/docs/SAC_domains.md   →  template/schema (managed, sempre atualiza
 
 Isso é breaking para todo consumidor existente e para `sac_domains.py`, `sac-onboard`, `mirror`, docs e as três skills. Precisa acontecer **em T2/T3, antes da 0.1.0** — depois de publicar, o custo multiplica pelo número de consumidores.
 
-### 1.2 [ALTO] Existe um segundo adapter MCP, com semântica divergente
+### 1.2 [ALTO] Existia um segundo adapter MCP, com semântica divergente
 
-`sac-context/src/sac_mcp_server.py` é um servidor FastMCP em Python que expõe `get_sac_constraints` chamando `sac_engine.lookup` **diretamente**, com `root = os.getcwd()`, sem passar por `sac_domains`. Resultado: sem gate de membership, sem `filepath_required` PAUSE, `filepath` opcional de verdade.
+Existia um servidor MCP Python legado que expunha `get_sac_constraints` chamando `sac_engine.lookup` **diretamente**, com `root = os.getcwd()`, sem passar por `sac_domains`. Resultado: sem gate de membership, sem `filepath_required` PAUSE, `filepath` opcional de verdade.
 
 Ou seja: **a paridade CLI ≡ MCP já é falsa hoje**, para um dos dois adapters. Ele está marcado "LEGACY / debug" em docstring e no invariante DP-1 da `sac-evolution` — mas marcação em comentário não é gate. Nenhum dos dois relatórios menciona sua existência; o ADR-003 do v2 ("Node MCP adapter é thin") fala no singular de um sistema que tem dois.
 
@@ -206,7 +206,7 @@ Para não haver dúvida sobre o escopo desta crítica:
 | # | Seção do v2 | Correção |
 |---|---|---|
 | C1 | §12.2 | `owned` não pode residir dentro de `managed`. Exigir mudança de caminho do manifesto e separação template/manifesto, em T2/T3, antes da 0.1.0. |
-| C2 | ADR-003, §14 | Reconhecer `sac_mcp_server.py`. Decidir: deletar ou submeter aos mesmos gates. Gate do T2. |
+| C2 | ADR-003, §14 | Reconhecer adapter Python legado. Decidir: deletar ou submeter aos mesmos gates. Gate do T2. |
 | C3 | §14.1, T0/T2 | Declarar que a Layer A não existe. Precificar e sequenciar antes de mover código. Reconhecer o smoke como Layer B+C existente e estender, não duplicar. |
 | C4 | §9.1, §5 | `payload_bytes` atual sub-relata 23,9 %. Redefinir como bytes efetivamente escritos. Unificar a unidade do orçamento semântico (compacto) com a da emissão (indent=1) ou declarar a razão medida. Corrigir a afirmação de que `context_payload_too_large` sai com exit 0 — sai com 1. |
 | C5 | §2.2, §9.2, DECISION-6 | Reescopar T6: o vazamento primário de path é o **payload**, não a telemetria. Adicionar "autor de fork PR" à tabela de atores, criada pela própria publicação. |

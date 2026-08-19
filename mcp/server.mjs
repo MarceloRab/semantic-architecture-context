@@ -23,6 +23,7 @@
  */
 
 import { spawn } from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -54,6 +55,24 @@ export function resolvePython() {
 
 export function resolveCliPath() {
   return path.resolve(__dirname, "..", "src", "sac_scan.py");
+}
+
+/**
+ * Read and validate project version dynamically from package.json (SSOT).
+ * Throws an explicit named error on failure — never falls back to a default version.
+ */
+export function resolvePackageVersion() {
+  const pkgPath = path.resolve(__dirname, "package.json");
+  try {
+    const raw = fs.readFileSync(pkgPath, "utf-8");
+    const parsed = JSON.parse(raw);
+    if (!parsed.version || typeof parsed.version !== "string" || !parsed.version.trim()) {
+      throw new Error(`Invalid or missing 'version' field in ${pkgPath}`);
+    }
+    return parsed.version.trim();
+  } catch (err) {
+    throw new Error(`Failed to resolve package version from ${pkgPath}: ${err.message}`);
+  }
 }
 
 export const LOOKUP_TIMEOUT_MS = 30_000;
@@ -321,10 +340,11 @@ export async function assessSacCapillarityPayload(domainId, opts = {}) {
   return runCapillarity({ ...opts, domainId });
 }
 
-function createServer() {
+export function createServer() {
+  const version = resolvePackageVersion();
   const server = new McpServer({
     name: "sac",
-    version: "1.6.0",
+    version,
   });
 
   server.tool(

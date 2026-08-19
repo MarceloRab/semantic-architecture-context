@@ -14,14 +14,14 @@ O repositório tem exatamente uma superfície MCP e exatamente uma fonte de vers
 
 ## Context capsule
 
-- Current flow: hoje existem **duas** superfícies MCP. A segunda, `src/sac_mcp_server.py` (não copiada em track_03), é um FastMCP que chama `sac_engine.lookup` direto com `root = os.getcwd()`, sem passar por `sac_domains` — logo sem gate de membership e sem PAUSE de `filepath_required`. Ela é também o único arquivo Python com dependência de terceiros.
+- Current flow: no legado existiam **duas** superfícies MCP. A segunda (servidor Python legado, não copiado em track_03) chamava `sac_engine.lookup` direto com `root = os.getcwd()`, sem passar por `sac_domains` — logo sem gate de membership e sem PAUSE de `filepath_required`. Ela era também o único arquivo Python com dependência de terceiros.
 - Current flow: a versão hoje tem três fontes divergentes — `mcp/package.json` `"version": "1.0.0"`, `new McpServer({ version: "1.6.0" })` @ `mcp/server.mjs:327`, e o gate D4 da skill `sac-evolution` ("MCP v1.6.0+").
 - Owner: `mcp/package.json` passa a ser a fonte única de versão.
 - Dependency: `mcp/server.mjs` já é módulo ESM e pode ler JSON; `sac_scan.py` tem `json` da stdlib disponível.
 
 ## Semantic authority
 
-- Must: remover toda referência a `sac_mcp_server.py` em `docs/`, em `ci/` e em qualquer texto rastreado. O arquivo já não existe no destino.
+- Must: remover toda referência ao adapter Python legado em `docs/`, em `ci/` e em qualquer texto rastreado. O arquivo já não existe no destino.
 - Must: `mcp/package.json` → `"version": "0.1.0"` e `"engines": { "node": ">=22" }`.
 - Must: `mcp/server.mjs` lê a versão de `mcp/package.json` em vez do literal `"1.6.0"`.
 - Must: `sac_scan.py` ganha `--version`, que lê a mesma `mcp/package.json` com o `json` da stdlib.
@@ -46,7 +46,7 @@ O repositório tem exatamente uma superfície MCP e exatamente uma fonte de vers
 
 ## DoD
 
-1. Busca por `FastMCP` e por `sac_mcp_server` em arquivos rastreados retorna zero resultados. | Proof: inspect
+1. Busca por referências ao adapter Python legado em arquivos rastreados retorna zero resultados. | Proof: inspect
 2. `initialize` do servidor MCP anuncia `0.1.0`; `sac_scan.py --version` imprime `0.1.0`; `mcp/package.json` declara `0.1.0`. | Proof: manual (três execuções)
 3. Reintroduzir um literal semver em `mcp/server.mjs` faz o gate de CI falhar. | Proof: manual
 4. `mcp/smoke.mjs` continua verde. | Proof: manual

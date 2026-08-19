@@ -26,3 +26,6 @@ jobs:
 
       - name: Run Hygiene Verification Gate
         run: python3 .github/scripts/check_hygiene.py
+
+      - name: Run Version Consistency Gate
+        run: python3 .github/scripts/check_version.py

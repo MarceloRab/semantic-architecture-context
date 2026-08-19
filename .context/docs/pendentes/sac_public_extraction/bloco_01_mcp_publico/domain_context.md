@@ -21,7 +21,7 @@ Cápsula factual reutilizável. Só fatos necessários ao Bloco 01, cada um cita
 ## Contracts and invariants
 
 - Semântica vive só no Python; o adapter Node é fino (ADR-001..005, confirmado por leitura de `mcp/server.mjs`)
-- Engine é stdlib-only (contrato C1/DP-1) @ `src/sac_mcp_server.py:9-11` (docstring declara que este é o único arquivo Python com dep de terceiros)
+- Engine é stdlib-only (contrato C1/DP-1)
 - Paridade CLI ≡ MCP é o invariante central verificado por `mcp/smoke.mjs` (873 linhas)
 - Manifesto Route é markdown, legível sem ferramenta — requisito do princípio 3
 - `_BASE_SCENARIOS = {SUMMARY, EXTEND, REGRESSION}`; ausência ⇒ `INVALID_CONTRACT` @ `src/sac_domains.py:36-38`
@@ -32,7 +32,7 @@ Cápsula factual reutilizável. Só fatos necessários ao Bloco 01, cada um cita
 - Owner da resolução: `sac_domains_path(root)` @ `src/sac_domains.py:44`
 - Dependentes do caminho: `sac_scan.py` (todos os subcomandos), skill `sac-onboard`, skill `sac-execution-overlay`, `docs/SAC_BOOTSTRAP.md`, `scripts/mirror-sac-tooling.ps1:121-133`
 - Owner da versão publicada: hoje triplo e sem canônico — `mcp/package.json` `"version": "1.0.0"`, `new McpServer({version:"1.6.0"})` @ `mcp/server.mjs:327`, e o gate D4 da skill `sac-evolution`
-- Segunda superfície MCP, hoje sem dono declarado: `src/sac_mcp_server.py` (75 linhas, FastMCP, chama `sac_engine.lookup` direto com `root=os.getcwd()`, sem `sac_domains`, sem gate de membership, sem PAUSE de `filepath_required`)
+- Segunda superfície MCP (eliminada na Track 04): servidor Python legado não-gated com dependência externa
 
 ## Critical surfaces
 
