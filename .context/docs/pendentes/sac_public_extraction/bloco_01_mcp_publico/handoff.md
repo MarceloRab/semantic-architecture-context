@@ -4,7 +4,7 @@
 
 - Design: .context/docs/pendentes/sac_public_extraction/bloco_01_mcp_publico/design.md
 - Approved by: usuário, 2026-08-19 — autorização explícita para ativar o builder
-- Current: track_10
+- Current: COMPLETED (Bloco 01 concluído em 0.1.0-rc)
 
 ## Tracks
 
@@ -19,7 +19,7 @@
 | track_07 | install.py stdlib-only que nunca sobrescreve owned, e quickstart executável | track_06 | APPROVED | 1 |
 | track_08 | Três skills públicas sem caminho de máquina e sem gatilho ambíguo, mais GOVERNANCE | track_07 | APPROVED | 1 |
 | track_09 | CI pública que aceita PR de fork sem segredo, sem pull_request_target, sem diff-check | track_08 | APPROVED | 1 |
-| track_10 | RELEASE_GATE.md, promessa honesta no README e tag 0.1.0-rc | track_09 | EXECUTED | 1 |
+| track_10 | RELEASE_GATE.md, promessa honesta no README e tag 0.1.0-rc | track_09 | APPROVED | 1 |
 
 
 Status: `PENDING` -> `EXECUTED` | `FAILED` | `REPLAN` -> `APPROVED` | `CHANGES_REQUIRED` | `REPLAN`.
