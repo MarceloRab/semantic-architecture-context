@@ -522,7 +522,9 @@ def discover_domain(
             entry["replacement"] = tag.replacement
         compact.append(entry)
 
-    return {
+    from sac_domains import attach_gates_bypassed
+
+    return attach_gates_bypassed({
         "mode": "discover",
         "domain_id": match.get("domain_id"),
         "index": ".sac/domains.md",
@@ -534,7 +536,7 @@ def discover_domain(
         "warnings": warnings,
         "pause_hint": DISCOVER_HINT,
         "hint_tool": "get_sac_constraints",
-    }
+    })
 
 
 def build_domain_context(root: str, domain_id: str) -> dict:
@@ -661,7 +663,9 @@ def build_domain_context(root: str, domain_id: str) -> dict:
             "required_action": "Use discover_sac for scoped inventory, then get_sac_constraints for precise targets.",
             "hint_tool": "discover_sac",
         }
-    return payload
+    from sac_domains import attach_gates_bypassed
+
+    return attach_gates_bypassed(payload)
 
 
 def symbol_index_path(root: str) -> str:
@@ -889,8 +893,10 @@ def lookup(
         "warnings_truncated": warnings_truncated,
     }
 
+    from sac_domains import attach_gates_bypassed
+
     if not matches:
-        return result
+        return attach_gates_bypassed(result)
 
     any_truncated = False
     for tag in matches:
@@ -902,7 +908,7 @@ def lookup(
         result["matches"].append(match_dict)
 
     result["truncated"] = any_truncated
-    return result
+    return attach_gates_bypassed(result)
 
 
 _CANONICAL_WARNING_MARKERS = (
@@ -1286,7 +1292,9 @@ def assess_domain_capillarity(root: str, domain_id: str) -> dict:
         )
     )
 
-    return {
+    from sac_domains import attach_gates_bypassed
+
+    return attach_gates_bypassed({
         "mode": "capillarity",
         "domain_id": domain.get("domain_id"),
         "status": status,
@@ -1311,7 +1319,7 @@ def assess_domain_capillarity(root: str, domain_id: str) -> dict:
         "payload_warn": payload_warn,
         "warnings": list(warnings) + extra_warnings,
         **fitness,
-    }
+    })
 
 
 def main() -> None:

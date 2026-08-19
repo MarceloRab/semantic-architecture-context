@@ -28,6 +28,7 @@ from sac_engine import (  # noqa: E402
     write_symbol_index,
 )
 from sac_domains import (  # noqa: E402
+    attach_gates_bypassed,
     filepath_membership_error,
     filepath_required_error,
     list_sac_domains_payload,
@@ -36,6 +37,41 @@ from sac_domains import (  # noqa: E402
 )
 from sac_diff import run_diff_check  # noqa: E402
 from sac_validate import validate, render_orphans, Orphan  # noqa: E402
+
+
+class SacArgumentParser(argparse.ArgumentParser):
+    """Custom ArgumentParser emitting structured JSON on usage errors with exit code 2."""
+
+    def error(self, message: str) -> None:
+        payload = {
+            "error": True,
+            "code": "sac.environment.invalid_arguments",
+            "message": message,
+            "remediation": "Check command-line syntax.",
+        }
+        print(json.dumps(payload, indent=1))
+        sys.exit(2)
+
+
+def validate_root(root: str) -> dict[str, Any] | None:
+    """Validate that root path exists and is a directory."""
+    if not os.path.exists(root):
+        return {
+            "error": True,
+            "code": "sac.environment.root_not_found",
+            "message": f"Root directory does not exist: {root}",
+            "root": root,
+            "remediation": "Ensure the specified --root path exists.",
+        }
+    if not os.path.isdir(root):
+        return {
+            "error": True,
+            "code": "sac.environment.root_not_directory",
+            "message": f"Root path is not a directory: {root}",
+            "root": root,
+            "remediation": "Specify a valid directory path for --root.",
+        }
+    return None
 
 
 def resolve_package_version() -> str:
@@ -57,9 +93,9 @@ def resolve_package_version() -> str:
         sys.exit(1)
 
 
-def _build_parser() -> argparse.ArgumentParser:
+def _build_parser() -> SacArgumentParser:
     version = resolve_package_version()
-    parser = argparse.ArgumentParser(
+    parser = SacArgumentParser(
         prog="sac_scan",
         description="Semantic Architecture Context (SAC) scanner.",
     )
@@ -365,8 +401,9 @@ def _resolve_trim_cap(explicit: int | None) -> int | None:
 
 
 def _cmd_lookup(args: argparse.Namespace) -> int:
-    if not os.path.isdir(args.root):
-        print(f"error: root is not a directory: {args.root}", file=sys.stderr)
+    root_err = validate_root(args.root)
+    if root_err is not None:
+        print(json.dumps(root_err, indent=1))
         return 2
 
     filepath = (args.filepath or "").strip() or None
@@ -434,6 +471,7 @@ def _cmd_lookup(args: argparse.Namespace) -> int:
         trim_warnings_cap=_resolve_trim_cap(args.trim_warnings),
         hop1_scope_rels=hop1_scope,
     )
+    result = attach_gates_bypassed(result)
 
     if args.json:
         print(json.dumps(result, indent=1))
@@ -444,37 +482,45 @@ def _cmd_lookup(args: argparse.Namespace) -> int:
 
 
 def _cmd_list_domains(args: argparse.Namespace) -> int:
-    if not os.path.isdir(args.root):
-        print(f"error: root is not a directory: {args.root}", file=sys.stderr)
+    root_err = validate_root(args.root)
+    if root_err is not None:
+        print(json.dumps(root_err, indent=1))
         return 2
     payload = list_sac_domains_payload(args.root, domain_id=args.domain_id)
+    payload = attach_gates_bypassed(payload)
     print(json.dumps(payload, indent=1))
     return 1 if payload.get("error") else 0
 
 
 def _cmd_discover(args: argparse.Namespace) -> int:
-    if not os.path.isdir(args.root):
-        print(f"error: root is not a directory: {args.root}", file=sys.stderr)
+    root_err = validate_root(args.root)
+    if root_err is not None:
+        print(json.dumps(root_err, indent=1))
         return 2
     payload = discover_domain(args.root, args.domain_id)
+    payload = attach_gates_bypassed(payload)
     print(json.dumps(payload, indent=1))
     return 1 if payload.get("error") else 0
 
 
 def _cmd_context(args: argparse.Namespace) -> int:
-    if not os.path.isdir(args.root):
-        print(f"error: root is not a directory: {args.root}", file=sys.stderr)
+    root_err = validate_root(args.root)
+    if root_err is not None:
+        print(json.dumps(root_err, indent=1))
         return 2
     payload = build_domain_context(args.root, args.domain_id)
+    payload = attach_gates_bypassed(payload)
     print(json.dumps(payload, indent=1))
     return 1 if payload.get("error") else 0
 
 
 def _cmd_capillarity(args: argparse.Namespace) -> int:
-    if not os.path.isdir(args.root):
-        print(f"error: root is not a directory: {args.root}", file=sys.stderr)
+    root_err = validate_root(args.root)
+    if root_err is not None:
+        print(json.dumps(root_err, indent=1))
         return 2
     payload = assess_domain_capillarity(args.root, args.domain_id)
+    payload = attach_gates_bypassed(payload)
     print(json.dumps(payload, indent=1))
     if payload.get("error"):
         return 1
@@ -482,11 +528,27 @@ def _cmd_capillarity(args: argparse.Namespace) -> int:
 
 
 def _cmd_diff_check(args: argparse.Namespace) -> int:
+    root_err = validate_root(args.root)
+    if root_err is not None:
+        print(json.dumps(root_err, indent=1))
+        return 2
     if args.patch is None and args.base is None:
-        print("error: diff-check requires --patch or --base", file=sys.stderr)
+        payload = {
+            "error": True,
+            "code": "sac.environment.invalid_arguments",
+            "message": "diff-check requires --patch or --base",
+            "remediation": "Provide either --patch <file> or --base <ref>.",
+        }
+        print(json.dumps(payload, indent=1))
         return 2
     if args.patch is not None and args.base is not None:
-        print("error: use --patch or --base, not both", file=sys.stderr)
+        payload = {
+            "error": True,
+            "code": "sac.environment.invalid_arguments",
+            "message": "use --patch or --base, not both",
+            "remediation": "Provide either --patch <file> or --base <ref>, but not both.",
+        }
+        print(json.dumps(payload, indent=1))
         return 2
 
     try:
@@ -498,7 +560,13 @@ def _cmd_diff_check(args: argparse.Namespace) -> int:
             json_output=args.json,
         )
     except (ValueError, RuntimeError) as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        payload = {
+            "error": True,
+            "code": "sac.environment.diff_check_failed",
+            "message": str(exc),
+            "remediation": "Check git repository state and diff arguments.",
+        }
+        print(json.dumps(payload, indent=1))
         return 2
 
     print(output)
@@ -506,8 +574,9 @@ def _cmd_diff_check(args: argparse.Namespace) -> int:
 
 
 def _cmd_validate(args: argparse.Namespace) -> int:
-    if not os.path.isdir(args.root):
-        print(f"error: root is not a directory: {args.root}", file=sys.stderr)
+    root_err = validate_root(args.root)
+    if root_err is not None:
+        print(json.dumps(root_err, indent=1))
         return 2
 
     orphans, warnings = validate(root=args.root)
@@ -518,6 +587,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
             "warnings": warnings,
             "count": len(orphans),
         }
+        report = attach_gates_bypassed(report)
         print(json.dumps(report, indent=1))
     else:
         if warnings:
@@ -531,12 +601,14 @@ def _cmd_validate(args: argparse.Namespace) -> int:
 
 
 def _cmd_index_build(args: argparse.Namespace) -> int:
-    if not os.path.isdir(args.root):
-        print(f"error: root is not a directory: {args.root}", file=sys.stderr)
+    root_err = validate_root(args.root)
+    if root_err is not None:
+        print(json.dumps(root_err, indent=1))
         return 2
 
     if args.check:
         result = check_symbol_index(root=args.root)
+        result = attach_gates_bypassed(result)
         if args.json:
             print(json.dumps(result, indent=1))
         else:
@@ -550,6 +622,7 @@ def _cmd_index_build(args: argparse.Namespace) -> int:
         return 0 if result.get("ok") else 1
 
     summary = write_symbol_index(root=args.root)
+    summary = attach_gates_bypassed(summary)
     if args.json:
         print(json.dumps(summary, indent=1))
     else:
@@ -568,7 +641,6 @@ def main(argv: list[str] | None = None) -> int:
     try:
         args = parser.parse_args(argv)
     except SystemExit as exc:
-        # argparse exits with 2 on usage errors; stderr is already written.
         return exc.code if isinstance(exc.code, int) else 2
 
     if args.command == "lookup":
@@ -588,7 +660,13 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "capillarity":
         return _cmd_capillarity(args)
 
-    print(f"error: unknown command: {args.command}", file=sys.stderr)
+    payload = {
+        "error": True,
+        "code": "sac.environment.invalid_arguments",
+        "message": f"unknown command: {args.command}",
+        "remediation": "Check command-line syntax.",
+    }
+    print(json.dumps(payload, indent=1))
     return 2
 
 

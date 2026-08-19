@@ -44,6 +44,43 @@ _TAG_TYPES = frozenset({"ARCH", "REGR", "DEPRECATED"})
 _CLAIM_ID_RE = re.compile(r"^[A-Z][A-Z0-9_]{2,63}$")
 _SYMBOL_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.$-]*$")
 
+_KNOWN_GATE_ESCAPES: tuple[str, ...] = (
+    "SAC_ALLOW_UNSCOPED",
+    "SAC_ALLOW_FILEPATH_OUTSIDE_DOMAINS",
+    "SAC_ALLOW_HOP1_FULL_SCAN",
+)
+
+
+def detect_bypassed_gates() -> list[str]:
+    """Detect active HALT escape flags in os.environ."""
+    return [
+        var for var in _KNOWN_GATE_ESCAPES if (os.environ.get(var) or "").strip() == "1"
+    ]
+
+
+def attach_gates_bypassed(
+    payload: dict[str, Any], bypassed: list[str] | None = None
+) -> dict[str, Any]:
+    """Attach gates_bypassed and explicit warnings if any gate was bypassed.
+
+    When no gates are bypassed, gates_bypassed is completely omitted (0-byte overhead).
+    """
+    active = detect_bypassed_gates() if bypassed is None else bypassed
+    if not active:
+        return payload
+    payload["gates_bypassed"] = list(active)
+    warnings = payload.get("warnings")
+    if isinstance(warnings, list):
+        for var in active:
+            msg = f"Gate bypassed by environment override: {var}"
+            if msg not in warnings:
+                warnings.append(msg)
+    elif "warnings" not in payload and not payload.get("error"):
+        payload["warnings"] = [
+            f"Gate bypassed by environment override: {var}" for var in active
+        ]
+    return payload
+
 
 def sac_domains_path(root: str) -> str:
     return os.path.normpath(os.path.join(root, _DOMAINS_REL))
@@ -516,7 +553,7 @@ def list_sac_domains_payload(
         match = find_domain(domains, wanted)
         if match is None:
             return domain_not_found_error(domains, wanted, mode="expand")
-        return {
+        return attach_gates_bypassed({
             "index": index_rel,
             "mode": "expand",
             "count": 1,
@@ -525,16 +562,16 @@ def list_sac_domains_payload(
                 "Chame discover_sac(domain_id) ou escolha filepath ∈ files:, "
                 "depois get_sac_constraints(symbol, filepath)."
             ),
-        }
+        })
 
     compact = [_compact_domain(d) for d in domains]
-    return {
+    return attach_gates_bypassed({
         "index": index_rel,
         "mode": "catalog",
         "count": len(compact),
         "domains": compact,
         "pause_hint": PAUSE_HINT,
-    }
+    })
 
 
 def domains_covering_filepath(

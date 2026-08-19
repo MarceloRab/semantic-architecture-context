@@ -24,6 +24,7 @@ import {
   resolvePython,
   resolveSacRoot,
   runCapillarity,
+  runCliJson,
   runContext,
   runDiscover,
   runListDomains,
@@ -830,6 +831,223 @@ async function assertCapillarity(root, python, cliPath) {
   );
 }
 
+async function assertGateBypassedAttestation(root, tagged, outside, python, cliPath) {
+  // 1. SAC_ALLOW_UNSCOPED:
+  // Off:
+  const unscopedOffCli = cliLookup("SmokeArch", root, undefined, python, cliPath);
+  if (unscopedOffCli.parsed.gates_bypassed !== undefined) {
+    console.error("[FAIL] gates_bypassed must be omitted when SAC_ALLOW_UNSCOPED is off", unscopedOffCli);
+    process.exit(1);
+  }
+  const unscopedOffNode = await getSacConstraintsPayload("SmokeArch", undefined, { root, python, cliPath });
+  if (unscopedOffNode.gates_bypassed !== undefined) {
+    console.error("[FAIL] gates_bypassed must be omitted in Node when SAC_ALLOW_UNSCOPED is off", unscopedOffNode);
+    process.exit(1);
+  }
+  if (!deepEqual(unscopedOffCli.parsed, unscopedOffNode)) {
+    console.error("[FAIL] parity mismatch for unscoped off", unscopedOffCli.parsed, unscopedOffNode);
+    process.exit(1);
+  }
+
+  // On:
+  const envUnscoped = { ...process.env, SAC_ALLOW_UNSCOPED: "1" };
+  const unscopedOnCli = cliLookup("SmokeArch", root, undefined, python, cliPath, envUnscoped);
+  if (
+    !Array.isArray(unscopedOnCli.parsed.gates_bypassed) ||
+    !unscopedOnCli.parsed.gates_bypassed.includes("SAC_ALLOW_UNSCOPED") ||
+    !(unscopedOnCli.parsed.warnings || []).includes("Gate bypassed by environment override: SAC_ALLOW_UNSCOPED")
+  ) {
+    console.error("[FAIL] SAC_ALLOW_UNSCOPED on must attest gates_bypassed and warning", unscopedOnCli.parsed);
+    process.exit(1);
+  }
+  const unscopedOnNode = await getSacConstraintsPayload("SmokeArch", undefined, {
+    root,
+    python,
+    cliPath,
+    env: { SAC_ALLOW_UNSCOPED: "1" },
+  });
+  if (!deepEqual(unscopedOnCli.parsed, unscopedOnNode)) {
+    console.error("[FAIL] parity mismatch for SAC_ALLOW_UNSCOPED on", unscopedOnCli.parsed, unscopedOnNode);
+    process.exit(1);
+  }
+
+  // 2. SAC_ALLOW_FILEPATH_OUTSIDE_DOMAINS:
+  // Off:
+  const outsideOffCli = cliLookup("SmokeOutside", root, outside, python, cliPath);
+  if (outsideOffCli.parsed.gates_bypassed !== undefined) {
+    console.error("[FAIL] gates_bypassed must be omitted when SAC_ALLOW_FILEPATH_OUTSIDE_DOMAINS is off", outsideOffCli);
+    process.exit(1);
+  }
+  const outsideOffNode = await getSacConstraintsPayload("SmokeOutside", outside, { root, python, cliPath });
+  if (outsideOffNode.gates_bypassed !== undefined) {
+    console.error("[FAIL] gates_bypassed must be omitted in Node when SAC_ALLOW_FILEPATH_OUTSIDE_DOMAINS is off", outsideOffNode);
+    process.exit(1);
+  }
+  if (!deepEqual(outsideOffCli.parsed, outsideOffNode)) {
+    console.error("[FAIL] parity mismatch for outside domains off", outsideOffCli.parsed, outsideOffNode);
+    process.exit(1);
+  }
+
+  // On:
+  const envOutside = { ...process.env, SAC_ALLOW_FILEPATH_OUTSIDE_DOMAINS: "1" };
+  const outsideOnCli = cliLookup("SmokeOutside", root, outside, python, cliPath, envOutside);
+  if (
+    !Array.isArray(outsideOnCli.parsed.gates_bypassed) ||
+    !outsideOnCli.parsed.gates_bypassed.includes("SAC_ALLOW_FILEPATH_OUTSIDE_DOMAINS") ||
+    !(outsideOnCli.parsed.warnings || []).includes("Gate bypassed by environment override: SAC_ALLOW_FILEPATH_OUTSIDE_DOMAINS")
+  ) {
+    console.error("[FAIL] SAC_ALLOW_FILEPATH_OUTSIDE_DOMAINS on must attest gates_bypassed and warning", outsideOnCli.parsed);
+    process.exit(1);
+  }
+  const outsideOnNode = await getSacConstraintsPayload("SmokeOutside", outside, {
+    root,
+    python,
+    cliPath,
+    env: { SAC_ALLOW_FILEPATH_OUTSIDE_DOMAINS: "1" },
+  });
+  if (!deepEqual(outsideOnCli.parsed, outsideOnNode)) {
+    console.error("[FAIL] parity mismatch for SAC_ALLOW_FILEPATH_OUTSIDE_DOMAINS on", outsideOnCli.parsed, outsideOnNode);
+    process.exit(1);
+  }
+
+  // 3. SAC_ALLOW_HOP1_FULL_SCAN:
+  // Off:
+  const hop1OffCli = cliLookup("SmokeRegr", root, tagged, python, cliPath);
+  if (hop1OffCli.parsed.gates_bypassed !== undefined) {
+    console.error("[FAIL] gates_bypassed must be omitted when SAC_ALLOW_HOP1_FULL_SCAN is off", hop1OffCli);
+    process.exit(1);
+  }
+  const hop1OffNode = await getSacConstraintsPayload("SmokeRegr", tagged, { root, python, cliPath });
+  if (hop1OffNode.gates_bypassed !== undefined) {
+    console.error("[FAIL] gates_bypassed must be omitted in Node when SAC_ALLOW_HOP1_FULL_SCAN is off", hop1OffNode);
+    process.exit(1);
+  }
+  if (!deepEqual(hop1OffCli.parsed, hop1OffNode)) {
+    console.error("[FAIL] parity mismatch for hop1 off", hop1OffCli.parsed, hop1OffNode);
+    process.exit(1);
+  }
+
+  // On:
+  const envHop1 = { ...process.env, SAC_ALLOW_HOP1_FULL_SCAN: "1" };
+  const hop1OnCli = cliLookup("SmokeRegr", root, tagged, python, cliPath, envHop1);
+  if (
+    !Array.isArray(hop1OnCli.parsed.gates_bypassed) ||
+    !hop1OnCli.parsed.gates_bypassed.includes("SAC_ALLOW_HOP1_FULL_SCAN") ||
+    !(hop1OnCli.parsed.warnings || []).includes("Gate bypassed by environment override: SAC_ALLOW_HOP1_FULL_SCAN")
+  ) {
+    console.error("[FAIL] SAC_ALLOW_HOP1_FULL_SCAN on must attest gates_bypassed and warning", hop1OnCli.parsed);
+    process.exit(1);
+  }
+  const hop1OnNode = await getSacConstraintsPayload("SmokeRegr", tagged, {
+    root,
+    python,
+    cliPath,
+    env: { SAC_ALLOW_HOP1_FULL_SCAN: "1" },
+  });
+  if (!deepEqual(hop1OnCli.parsed, hop1OnNode)) {
+    console.error("[FAIL] parity mismatch for SAC_ALLOW_HOP1_FULL_SCAN on", hop1OnCli.parsed, hop1OnNode);
+    process.exit(1);
+  }
+
+  console.log("[OK] gates_bypassed attestation & warnings (3 escapes on/off, CLI≡MCP)");
+}
+
+async function assertEnvironmentErrors(root, python, cliPath) {
+  // 1. Root inexistente
+  const nonexistentRoot = path.join(os.tmpdir(), `sac_nonexistent_root_${Date.now()}`);
+  const rootMissingCli = spawnSync(
+    python,
+    [cliPath, "lookup", "SmokeArch", "--root", nonexistentRoot, "--json"],
+    { encoding: "utf8", windowsHide: true, env: process.env },
+  );
+  if (rootMissingCli.status !== 2) {
+    console.error("[FAIL] root_not_found CLI exit code must be 2, got", rootMissingCli.status);
+    process.exit(1);
+  }
+  const rootMissingCliPayload = JSON.parse((rootMissingCli.stdout || "").trim());
+  if (
+    !rootMissingCliPayload.error ||
+    rootMissingCliPayload.code !== "sac.environment.root_not_found" ||
+    !rootMissingCliPayload.remediation
+  ) {
+    console.error("[FAIL] root_not_found CLI payload invalid", rootMissingCliPayload);
+    process.exit(1);
+  }
+
+  const rootMissingNode = await runLookup("SmokeArch", "src/tagged.py", {
+    root: nonexistentRoot,
+    python,
+    cliPath,
+  });
+  if (!deepEqual(rootMissingCliPayload, rootMissingNode)) {
+    console.error("[FAIL] root_not_found parity mismatch", rootMissingCliPayload, rootMissingNode);
+    process.exit(1);
+  }
+
+  // 2. Root não-diretório (root is a file)
+  const fileRoot = path.join(root, "src", "tagged.py");
+  const rootFileCli = spawnSync(
+    python,
+    [cliPath, "lookup", "SmokeArch", "--root", fileRoot, "--json"],
+    { encoding: "utf8", windowsHide: true, env: process.env },
+  );
+  if (rootFileCli.status !== 2) {
+    console.error("[FAIL] root_not_directory CLI exit code must be 2, got", rootFileCli.status);
+    process.exit(1);
+  }
+  const rootFileCliPayload = JSON.parse((rootFileCli.stdout || "").trim());
+  if (
+    !rootFileCliPayload.error ||
+    rootFileCliPayload.code !== "sac.environment.root_not_directory" ||
+    !rootFileCliPayload.remediation
+  ) {
+    console.error("[FAIL] root_not_directory CLI payload invalid", rootFileCliPayload);
+    process.exit(1);
+  }
+
+  const rootFileNode = await runLookup("SmokeArch", "src/tagged.py", {
+    root: fileRoot,
+    python,
+    cliPath,
+  });
+  if (!deepEqual(rootFileCliPayload, rootFileNode)) {
+    console.error("[FAIL] root_not_directory parity mismatch", rootFileCliPayload, rootFileNode);
+    process.exit(1);
+  }
+
+  // 3. Argumentos inválidos (missing symbol)
+  const invalidArgsCli = spawnSync(
+    python,
+    [cliPath, "lookup", "--root", root, "--json"],
+    { encoding: "utf8", windowsHide: true, env: process.env },
+  );
+  if (invalidArgsCli.status !== 2) {
+    console.error("[FAIL] invalid_arguments CLI exit code must be 2, got", invalidArgsCli.status);
+    process.exit(1);
+  }
+  const invalidArgsCliPayload = JSON.parse((invalidArgsCli.stdout || "").trim());
+  if (
+    !invalidArgsCliPayload.error ||
+    invalidArgsCliPayload.code !== "sac.environment.invalid_arguments" ||
+    invalidArgsCliPayload.remediation !== "Check command-line syntax."
+  ) {
+    console.error("[FAIL] invalid_arguments CLI payload invalid", invalidArgsCliPayload);
+    process.exit(1);
+  }
+
+  const invalidArgsNode = await runCliJson(["lookup", "--root", root, "--json"], {
+    root,
+    python,
+    cliPath,
+  });
+  if (!deepEqual(invalidArgsCliPayload, invalidArgsNode)) {
+    console.error("[FAIL] invalid_arguments parity mismatch", invalidArgsCliPayload, invalidArgsNode);
+    process.exit(1);
+  }
+
+  console.log("[OK] sac.environment.* error class (root_not_found, root_not_directory, invalid_arguments, CLI≡MCP)");
+}
+
 async function main() {
   const python = resolvePython();
   const cliPath = resolveCliPath();
@@ -857,6 +1075,8 @@ async function main() {
       cliPath,
     );
     await assertHop1Scoped(root, tagged, python, cliPath);
+    await assertGateBypassedAttestation(root, tagged, outside, python, cliPath);
+    await assertEnvironmentErrors(root, python, cliPath);
     await assertValidateTagBlocks(root, python, cliPath);
     await assertPythonMissing(tagged);
     console.log("[OK] smoke exit 0");

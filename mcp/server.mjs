@@ -340,6 +340,54 @@ export async function assessSacCapillarityPayload(domainId, opts = {}) {
   return runCapillarity({ ...opts, domainId });
 }
 
+export function isEnvironmentError(err) {
+  const msg = err?.message ?? String(err);
+  return (
+    err?.code?.startsWith?.("sac.environment.") ||
+    /not found|ENOENT|SAC_PYTHON|spawn error|Failed to spawn|timed out/i.test(msg)
+  );
+}
+
+export function formatMcpCatchError(tool, err, extra = {}) {
+  const msg = err?.message ?? String(err);
+  if (isEnvironmentError(err)) {
+    const isMissingPython = /not found|ENOENT|SAC_PYTHON/i.test(msg);
+    const isTimeout = /timed out/i.test(msg);
+    return {
+      error: true,
+      code: isMissingPython
+        ? "sac.environment.python_missing"
+        : isTimeout
+          ? "sac.environment.timeout"
+          : (err?.code || "sac.environment_error"),
+      message: msg,
+      remediation: isMissingPython
+        ? "Install Python 3.12+ or set SAC_PYTHON to a valid Python executable."
+        : "Check environment, permissions, and command arguments.",
+      pause_hint: PAUSE_HINT,
+      hint_tool: "list_sac_domains",
+      ...extra,
+    };
+  }
+
+  const fallbackCodes = {
+    list_sac_domains: "list_domains_failed",
+    get_sac_context: "context_failed",
+    discover_sac: "discover_failed",
+    get_sac_constraints: "lookup_failed",
+    assess_sac_capillarity: "capillarity_failed",
+  };
+
+  return {
+    error: true,
+    code: fallbackCodes[tool] || "unknown_error",
+    message: msg,
+    pause_hint: PAUSE_HINT,
+    hint_tool: "list_sac_domains",
+    ...extra,
+  };
+}
+
 export function createServer() {
   const version = resolvePackageVersion();
   const server = new McpServer({
@@ -374,12 +422,7 @@ export function createServer() {
           withPerf(
             "list_sac_domains",
             startedAt,
-            {
-              error: true,
-              message: err?.message ?? String(err),
-              pause_hint: PAUSE_HINT,
-              hint_tool: "list_sac_domains",
-            },
+            formatMcpCatchError("list_sac_domains", err, { domain_id: domainId ?? null }),
             { domain_id: domainId ?? null },
           ),
           true,
@@ -412,13 +455,7 @@ export function createServer() {
           withPerf(
             "get_sac_context",
             startedAt,
-            {
-              error: true,
-              code: domainId ? "context_failed" : "domain_id_required",
-              message: err?.message ?? String(err),
-              pause_hint: domainId ? "Context assembly failed; inspect the reported runtime error." : PAUSE_HINT,
-              hint_tool: domainId ? "get_sac_context" : "list_sac_domains",
-            },
+            formatMcpCatchError("get_sac_context", err, { domain_id: domainId || null }),
             { domain_id: domainId || null },
           ),
           true,
@@ -449,13 +486,7 @@ export function createServer() {
           withPerf(
             "discover_sac",
             startedAt,
-            {
-              error: true,
-              code: domainId ? "discover_failed" : "domain_id_required",
-              message: err?.message ?? String(err),
-              pause_hint: domainId ? "Domain discovery failed; inspect the reported runtime error." : PAUSE_HINT,
-              hint_tool: domainId ? "discover_sac" : "list_sac_domains",
-            },
+            formatMcpCatchError("discover_sac", err, { domain_id: domainId || null }),
             { domain_id: domainId || null },
           ),
           true,
@@ -503,13 +534,11 @@ export function createServer() {
           withPerf(
             "get_sac_constraints",
             startedAt,
-            {
-              error: true,
-              code: trimmedPath ? "lookup_failed" : "filepath_required",
-              message: err?.message ?? String(err),
-              pause_hint: trimmedPath ? "Constraint lookup failed; inspect the reported runtime error." : PAUSE_HINT,
-              hint_tool: trimmedPath ? "get_sac_constraints" : "list_sac_domains",
-            },
+            formatMcpCatchError("get_sac_constraints", err, {
+              symbol_name,
+              filepath: trimmedPath ?? null,
+              domain_id: domainId ?? null,
+            }),
             {
               symbol_name,
               filepath: trimmedPath ?? null,
@@ -546,15 +575,7 @@ export function createServer() {
           withPerf(
             "assess_sac_capillarity",
             startedAt,
-            {
-              error: true,
-              code: domainId ? "capillarity_failed" : "domain_id_required",
-              message: err?.message ?? String(err),
-              pause_hint: domainId
-                ? "Capillarity assessment failed; inspect the reported runtime error."
-                : PAUSE_HINT,
-              hint_tool: domainId ? "assess_sac_capillarity" : "list_sac_domains",
-            },
+            formatMcpCatchError("assess_sac_capillarity", err, { domain_id: domainId || null }),
             { domain_id: domainId || null },
           ),
           true,
