@@ -480,7 +480,12 @@ def discover_domain(
         find_domain,
         parse_sac_domains,
         relativize_under_root,
+        resolve_domains_manifest,
     )
+
+    manifest_path, err = resolve_domains_manifest(root)
+    if err is not None:
+        return err
 
     wanted = (domain_id or "").strip()
     if not wanted:
@@ -520,7 +525,7 @@ def discover_domain(
     return {
         "mode": "discover",
         "domain_id": match.get("domain_id"),
-        "index": "sac-context/docs/SAC_domains.md",
+        "index": ".sac/domains.md",
         "files_listed": len(files_rel),
         "files_scanned": len(abs_paths),
         "missing_files": missing_files,
@@ -540,7 +545,12 @@ def build_domain_context(root: str, domain_id: str) -> dict:
         find_domain,
         parse_sac_domains,
         relativize_under_root,
+        resolve_domains_manifest,
     )
+
+    manifest_path, err = resolve_domains_manifest(root)
+    if err is not None:
+        return err
 
     wanted = (domain_id or "").strip()
     if not wanted:
@@ -1075,7 +1085,12 @@ def assess_domain_capillarity(root: str, domain_id: str) -> dict:
         normalize_repo_path,
         parse_sac_domains,
         relativize_under_root,
+        resolve_domains_manifest,
     )
+
+    manifest_path, err = resolve_domains_manifest(root)
+    if err is not None:
+        return err
 
     wanted = (domain_id or "").strip()
     if not wanted:

@@ -1,6 +1,6 @@
 # SAC — arquitetura funcional (visão humana)
 
-> Guia curto do **Semantic Architecture Context**. Contrato operacional detalhado: [`SAC_V2.md`](SAC_V2.md). Índice de módulos: [`SAC_domains.md`](SAC_domains.md).
+> Guia curto do **Semantic Architecture Context**. Contrato operacional detalhado: [`SAC_V2.md`](SAC_V2.md). Template de domínios: [`templates/domains.template.md`](../templates/domains.template.md).
 
 ## O que é
 
@@ -67,12 +67,12 @@ No chat: ≤1 linha por símbolo; **proibido** colar JSON cru (skill `sac-execut
 
 ## Índice de domínio
 
-`SAC_domains.md` registra módulos onboardados (`domain_id`, `intent`, `files:`, anchors).
+`.sac/domains.md` registra módulos onboardados (`domain_id`, `intent`, `files:`, anchors) sob posse exclusiva do projeto (`owned`).
 
+- Schema, manual COR-3 e template managed residem em `templates/domains.template.md`
 - Catalog Route **não** lista `files:` nem mantém `tag_count` manual (anti-dump/drift)
 - Context / Discover / membership usam `files:` como limite de busca, nunca como fila de leitura; só arquivos relacionados à task são abertos
-- Mirror lê exclusivamente `rabelo-standards/sac-context/` + bundles canônicos do catalog e **preserva** o `SAC_domains.md` do filho
-- `templates/project-base/sac-context/` é snapshot derivado de bootstrap, nunca fonte ou SSOT do mirror
+- Updates de tooling nunca sobrescrevem o `.sac/domains.md` do consumidor
 
 ## Skills (quando usar)
 
@@ -96,5 +96,6 @@ No chat: ≤1 linha por símbolo; **proibido** colar JSON cru (skill `sac-execut
 ## Referências
 
 - [`SAC_V2.md`](SAC_V2.md) — contrato completo (CLI, MCP, CI, gramática)
-- [`SAC_domains.md`](SAC_domains.md) — schema + template do índice
+- [`.sac/domains.md`](../.sac/domains.md) — manifesto owned do projeto
+- [`templates/domains.template.md`](../templates/domains.template.md) — schema + template managed do índice
 - [`SAC_BOOTSTRAP.md`](SAC_BOOTSTRAP.md) — ativar MCP no projeto filho

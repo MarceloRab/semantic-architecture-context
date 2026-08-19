@@ -17,8 +17,9 @@ sac-context/
   mcp/server.mjs          # primary MCP stdio (Node)
   mcp/package.json
   mcp/package-lock.json
+  templates/domains.template.md
+  .sac/domains.md
   docs/SAC_V2.md
-  docs/SAC_domains.md
   docs/SAC_validate.md
   docs/SAC_improvement_roadmap.md
   docs/SAC_BOOTSTRAP.md
@@ -30,7 +31,7 @@ sac-context/
   sac-execution-overlay/SKILL.md
 ```
 
-> Se algum arquivo estiver faltando, rode `mirror-sac-tooling.ps1` a partir do `rabelo-standards` com `-DestinationPath` na raiz do filho. Se `sac-context/docs/SAC_domains.md` **já existir** no destino, o mirror **não** o sobrescreve (índice por projeto).
+> O arquivo `.sac/domains.md` é de posse exclusiva do projeto (`owned`) e nunca sobrescrito por updates de tooling. O template/schema correspondente reside em `templates/domains.template.md` (`managed`).
 
 ---
 
@@ -120,7 +121,7 @@ Os MCPs SAC **só leem** constraints; não pedem alteração no projeto e **não
 
 Se o MCP não estiver disponível, siga esta ordem e anuncie cada nível ao usuário:
 
-1. **Route:** `list_sac_domains` / `SAC_domains.md` (1 intent → auto-route; zero → bounded-unmapped; múltiplos → HALT). No modo unmapped: `fd` somente em diretórios objetivos → `rg` scoped → `bat`; nunca PowerShell equivalente para contornar bloqueio.
+1. **Route:** `list_sac_domains` / `.sac/domains.md` (1 intent → auto-route; zero → bounded-unmapped; múltiplos → HALT). No modo unmapped: `fd` somente em diretórios objetivos → `rg` scoped → `bat`; nunca PowerShell equivalente para contornar bloqueio.
 2. **Context:** `get_sac_context({domain_id})` — anchors + todas `REGR`/`DEPRECATED` + hop1 em uma varredura de um único domínio; `context_payload_too_large` → nenhuma constraint, seguir Discover/Verify focado
 3. **MCP Verify:** `get_sac_constraints(symbol, filepath?, domain_id?)` — omitido → PAUSE `filepath_required` (≡ CLI)
 4. **Discover opcional:** `discover_sac({domain_id})` quando o overlay não localizar o alvo
@@ -248,6 +249,7 @@ Se o contexto revelar lacuna de tags, não invente nem grave automaticamente: us
 ## Referências
 
 - [`SAC_V2.md`](SAC_V2.md) — gramática, CLI, MCP, CI, contrato READ vs WRITE.
-- [`SAC_domains.md`](SAC_domains.md) — índice de domínios onboardados.
+- [`.sac/domains.md`](../.sac/domains.md) — índice de domínios onboardados (owned).
+- [`templates/domains.template.md`](../templates/domains.template.md) — schema e template managed.
 - [`SAC_validate.md`](SAC_validate.md) — critérios de adoção do `validate`.
 - [`SAC_improvement_roadmap.md`](SAC_improvement_roadmap.md) — evolução propagável do scaffold.

@@ -115,12 +115,12 @@ function writeFixture() {
     "utf8",
   );
   // Minimal domains index so membership can be exercised positively
-  const docs = path.join(root, "sac-context", "docs");
-  fs.mkdirSync(docs, { recursive: true });
+  const sacDir = path.join(root, ".sac");
+  fs.mkdirSync(sacDir, { recursive: true });
   const relTagged = path.relative(root, tagged).replace(/\\/g, "/");
   const relHop = path.relative(root, hop).replace(/\\/g, "/");
   fs.writeFileSync(
-    path.join(docs, "SAC_domains.md"),
+    path.join(sacDir, "domains.md"),
     [
       "# SAC Domain Index",
       "",
@@ -688,7 +688,7 @@ async function assertCapillarity(root, python, cliPath) {
     "utf8",
   );
   const relCap = path.relative(root, capSrc).replace(/\\/g, "/");
-  const domainsPath = path.join(root, "sac-context", "docs", "SAC_domains.md");
+  const domainsPath = path.join(root, ".sac", "domains.md");
   const existing = fs.readFileSync(domainsPath, "utf8");
   fs.writeFileSync(
     domainsPath,

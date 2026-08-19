@@ -1,4 +1,4 @@
-"""Parse sac-context/docs/SAC_domains.md (Route index). Stdlib-only.
+"""Parse .sac/domains.md (Route index). Stdlib-only.
 
 L0 catalog is compact (module/intent only). Expand with domain_id returns
 files/anchors for Discover/Verify. Membership uses files: lists.
@@ -11,7 +11,11 @@ import os
 import re
 from typing import Any
 
-_DOMAINS_REL = os.path.join("sac-context", "docs", "SAC_domains.md")
+_DOMAINS_REL = os.path.join(".sac", "domains.md")
+_LEGACY_DOMAINS_RELS = (
+    os.path.join("sac-context", "docs", "SAC_domains.md"),
+    os.path.join("docs", "SAC_domains.md"),
+)
 
 PAUSE_HINT = (
     "Qual domain_id expandir, ou informe filepath direto?"
@@ -55,14 +59,90 @@ def normalize_repo_path(path: str) -> str:
     return p
 
 
+def _legacy_has_project_domains(path: str) -> bool:
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            for line in fh:
+                m = _HEADER_RE.match(line)
+                if m:
+                    header_id = m.group(1).strip().lower()
+                    if header_id and header_id not in _SKIP_DOMAIN_IDS:
+                        return True
+    except OSError:
+        pass
+    return False
+
+
+def resolve_domains_manifest(root: str) -> tuple[str | None, dict[str, Any] | None]:
+    """Resolve active domains manifest path according to the 5-state legacy matrix.
+
+    States:
+    1. .sac/domains.md present, legacy absent: (current_path, None)
+    2. .sac/domains.md absent, legacy present with >= 1 project domain:
+       (None, sac.environment.domains_manifest_legacy_layout error)
+    3. .sac/domains.md absent, legacy present only with template/howto:
+       (None, None) -> treated as absent manifest
+    4. Both .sac/domains.md and legacy present:
+       (None, sac.environment.domains_manifest_ambiguous error)
+    5. Neither present: (None, None) -> treated as absent manifest
+    """
+    current_path = sac_domains_path(root)
+    has_current = os.path.isfile(current_path)
+
+    legacy_found: list[str] = []
+    for rel in _LEGACY_DOMAINS_RELS:
+        p = os.path.normpath(os.path.join(root, rel))
+        if os.path.isfile(p) and p != current_path and p not in legacy_found:
+            legacy_found.append(p)
+
+    has_legacy = len(legacy_found) > 0
+
+    if has_current and has_legacy:
+        legacy_display = relativize_under_root(root, legacy_found[0])
+        current_display = relativize_under_root(root, current_path)
+        return None, {
+            "error": True,
+            "code": "sac.environment.domains_manifest_ambiguous",
+            "message": (
+                f"Both {current_display} and legacy domains manifest ({legacy_display}) exist. "
+                f"Remove the legacy manifest file."
+            ),
+            "current_path": current_display,
+            "legacy_path": legacy_display,
+            "remediation": f"Remove the legacy manifest file ({legacy_display}).",
+        }
+
+    if has_current and not has_legacy:
+        return current_path, None
+
+    if not has_current and has_legacy:
+        if any(_legacy_has_project_domains(p) for p in legacy_found):
+            legacy_display = relativize_under_root(root, legacy_found[0])
+            current_display = relativize_under_root(root, current_path)
+            return None, {
+                "error": True,
+                "code": "sac.environment.domains_manifest_legacy_layout",
+                "message": (
+                    f"Legacy domains manifest found at {legacy_display} containing project domains. "
+                    f"Move it to {current_display}."
+                ),
+                "legacy_path": legacy_display,
+                "target_path": current_display,
+                "remediation": f"Move {legacy_display} to {current_display}.",
+            }
+        return None, None
+
+    return None, None
+
+
 def parse_sac_domains(root: str) -> list[dict[str, Any]]:
     """Return onboarded domain blocks (excludes template / howto sections)."""
-    path = sac_domains_path(root)
-    if not os.path.isfile(path):
+    manifest_path, err = resolve_domains_manifest(root)
+    if manifest_path is None or not os.path.isfile(manifest_path):
         return []
 
     try:
-        with open(path, "r", encoding="utf-8") as fh:
+        with open(manifest_path, "r", encoding="utf-8") as fh:
             lines = fh.read().splitlines()
     except OSError:
         return []
@@ -387,12 +467,13 @@ def find_domain(
 def domain_not_found_error(
     domains: list[dict[str, Any]], domain_id: str, *, mode: str
 ) -> dict[str, Any]:
+    index_rel = _DOMAINS_REL.replace("\\", "/")
     return {
         "error": True,
         "code": "domain_not_found",
-        "message": f"domain_id not found in SAC_domains.md: {domain_id}",
+        "message": f"domain_id not found in {index_rel}: {domain_id}",
         "domain_id": domain_id,
-        "index": "sac-context/docs/SAC_domains.md",
+        "index": index_rel,
         "available": [d.get("domain_id") for d in domains],
         "pause_hint": PAUSE_HINT,
         "mode": mode,
@@ -423,15 +504,20 @@ def list_sac_domains_payload(
     Default: module cards only — no files[] / full anchors (token economy).
     With domain_id: full files + anchors for that module only.
     """
+    manifest_path, err = resolve_domains_manifest(root)
+    if err is not None:
+        return err
+
     domains = parse_sac_domains(root)
     wanted = (domain_id or "").strip()
+    index_rel = _DOMAINS_REL.replace("\\", "/")
 
     if wanted:
         match = find_domain(domains, wanted)
         if match is None:
             return domain_not_found_error(domains, wanted, mode="expand")
         return {
-            "index": "sac-context/docs/SAC_domains.md",
+            "index": index_rel,
             "mode": "expand",
             "count": 1,
             "domains": [_expanded_domain(match)],
@@ -443,7 +529,7 @@ def list_sac_domains_payload(
 
     compact = [_compact_domain(d) for d in domains]
     return {
-        "index": "sac-context/docs/SAC_domains.md",
+        "index": index_rel,
         "mode": "catalog",
         "count": len(compact),
         "domains": compact,
@@ -477,12 +563,18 @@ def filepath_membership_error(
     """
     if (os.environ.get("SAC_ALLOW_FILEPATH_OUTSIDE_DOMAINS") or "").strip() == "1":
         return None
+
+    manifest_path, err = resolve_domains_manifest(root)
+    if err is not None:
+        return err
+
     domains = parse_sac_domains(root)
     if not domains:
         return None
 
     candidate = relativize_under_root(root, filepath)
     wanted = (domain_id or "").strip()
+    index_rel = _DOMAINS_REL.replace("\\", "/")
 
     if wanted:
         match = find_domain(domains, wanted)
@@ -498,7 +590,7 @@ def filepath_membership_error(
             "code": "filepath_not_in_domain",
             "message": (
                 f"filepath is not listed under domain_id={wanted} files: "
-                "in SAC_domains.md."
+                f"in {index_rel}."
             ),
             "filepath": candidate,
             "domain_id": wanted,
@@ -514,7 +606,7 @@ def filepath_membership_error(
         "error": True,
         "code": "filepath_not_in_sac_domains",
         "message": (
-            "filepath is not listed under any domain files: in SAC_domains.md. "
+            f"filepath is not listed under any domain files: in {index_rel}. "
             "Pick a module via list_sac_domains, discover_sac, or onboard."
         ),
         "filepath": candidate,
@@ -536,6 +628,10 @@ def resolve_hop1_scope_rels(
     """
     if (os.environ.get("SAC_ALLOW_HOP1_FULL_SCAN") or "").strip() == "1":
         return None, None
+
+    manifest_path, err = resolve_domains_manifest(root)
+    if err is not None:
+        return None, err
 
     domains = parse_sac_domains(root)
     if not domains:

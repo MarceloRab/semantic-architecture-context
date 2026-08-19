@@ -6,7 +6,7 @@
 > **Context fast path:** `get_sac_context({domain_id})` → anchors + todas `REGR`/`DEPRECATED` + hop1 em um overlay de um único domínio.
 > **Discover L1:** `discover_sac({domain_id})` → inventário slim (`file/line/type/symbol` [+ `verify`/`replacement`]); sem constraint.
 > **Verify:** `get_sac_constraints` — `filepath` explícito ∈ `files:` (+ `domain_id` opcional).
-> **Capillarity (on-demand):** `context_scenarios` + `coverage_claims` no domain; ausentes ⇒ `UNRATED`. Nunca entram no catalog L0 nem no expand. Assessor: `capillarity --domain` / `assess_sac_capillarity` (T2/T3). Três eixos: (A) `status` claims vs tags; (B) `fitness_status` papéis estruturais + seleção Context (`ARCH` ∈ `anchor_symbols`); (C) `payload_status` + `payload_warn`. `quality_status=PASS` com `SUFFICIENT`+`FIT`+(`OK`\|`OVER_BUDGET`); `OVER_BUDGET` é WARN — **MUST NOT** thin `files:`/tags/claims.
+> **Capillarity (on-demand):** `context_scenarios` + `coverage_claims` no domain; ausentes ⇒ `UNRATED`. Nunca entram no catalog L0 nem no expand. Assessor: `capillarity --domain` / `assess_sac_capillarity` (T2/T3). Três eixos: (A) `status` claims vs tags; (B) `fitness_status` papéis estruturais + seleção Context (`ARCH` ∈ `anchor_symbols`); (C) `payload_status` + `payload_warn`. `quality_status=PASS` com `SUFFICIENT`+`FIT`+(`OK`|`OVER_BUDGET`); `OVER_BUDGET` é WARN — **MUST NOT** thin `files:`/tags/claims.
 
 ## Como usar
 
@@ -52,4 +52,4 @@
 
 ---
 
-<!-- Domínios reais vivem nos projetos filho. Este arquivo no rabelo-standards mantém schema + _template. -->
+<!-- Domínios reais de projetos residem em .sac/domains.md. Este arquivo mantém schema, manual COR-3 e _template managed. -->

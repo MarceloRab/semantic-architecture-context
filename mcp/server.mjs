@@ -6,7 +6,7 @@
  * returns JSON identical to CLI --json (COR-GATE-1 idempotence).
  *
  * Tools:
- *   list_sac_domains     — Route: locals from SAC_domains.md (no tag scan)
+ *   list_sac_domains     — Route: locals from .sac/domains.md (no tag scan)
  *   discover_sac         — Discover: tags only under domain files:
  *   get_sac_context      — Context: anchors + all REGR/DEPRECATED + scoped hop1
  *   get_sac_constraints  — Verify: filepath optional in schema; empty →
@@ -473,7 +473,7 @@ export function createServer() {
         .string()
         .optional()
         .describe(
-          "Relative path under SAC_domains files:. Omit to receive filepath_required PAUSE (then list_sac_domains or ask user).",
+          "Relative path under .sac/domains.md files:. Omit to receive filepath_required PAUSE (then list_sac_domains or ask user).",
         ),
       domain_id: z
         .string()
