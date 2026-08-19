@@ -4,7 +4,7 @@
 
 - Design: .context/docs/pendentes/sac_public_extraction/bloco_01_mcp_publico/design.md
 - Approved by: usuário, 2026-08-19 — autorização explícita para ativar o builder
-- Current: track_07
+- Current: track_08
 
 ## Tracks
 
@@ -16,8 +16,8 @@
 | track_04 | Superfície MCP única e SSOT de versão em mcp/package.json, anunciando 0.1.0 | track_03 | APPROVED | 1 |
 | track_05 | Manifesto owned em .sac/domains.md, template managed, matriz de estados antigos fechada | track_04 | APPROVED | 1 |
 | track_06 | gates_bypassed no payload e terceira classe de erro sac.environment.* | track_05 | APPROVED | 1 |
-| track_07 | install.py stdlib-only que nunca sobrescreve owned, e quickstart executável | track_06 | EXECUTED | 1 |
-| track_08 | Três skills públicas sem caminho de máquina e sem gatilho ambíguo, mais GOVERNANCE | track_07 | PENDING | 0 |
+| track_07 | install.py stdlib-only que nunca sobrescreve owned, e quickstart executável | track_06 | APPROVED | 1 |
+| track_08 | Três skills públicas sem caminho de máquina e sem gatilho ambíguo, mais GOVERNANCE | track_07 | EXECUTED | 1 |
 | track_09 | CI pública que aceita PR de fork sem segredo, sem pull_request_target, sem diff-check | track_08 | PENDING | 0 |
 | track_10 | RELEASE_GATE.md, promessa honesta no README e tag 0.1.0-rc | track_09 | PENDING | 0 |
 
@@ -62,3 +62,9 @@ Append entries; never rewrite history.
 - Date: 2026-08-19
 - Status: EXECUTED
 - Outcome: Instalador universal `install.py` implementado na raiz em 100% Python stdlib (sem dependências de terceiros). Verificação rígida de runtimes para Python >= 3.11 e Node.js >= 22 com falhas explícitas nomeadas (`sac.installer.*`). Gerenciamento estrito de `owned` vs `managed` garantindo inicialização de `.sac/domains.md` a partir de `templates/domains.template.md` quando ausente e preservação 100% byte a byte (SHA-256 idêntico) de manifestos pré-existentes. Emissão clara de bloco JSON para host MCP sem jamais editar arquivos de configuração do host automaticamente. `README.md` criado na raiz com apresentação, os 3 princípios fundamentais do SAC e quickstart executável em 5 passos sem promessas infladas de prevenção de regressão. `docs/INSTALL.md` criado com guia abrangente de instalação, opções de CLI e troubleshooting. Suíte completa de verificação dos 6 DoDs em `ci/test_track_07_dod.py` 100% aprovada, `node mcp/smoke.mjs` 100% verde, `check_hygiene.py` e `check_version.py` validados.
+
+### track_08 — Attempt 1
+- Date: 2026-08-19
+- Status: EXECUTED
+- Outcome: Publicação das 3 skills públicas (`skills/sac-context/`, `skills/sac-onboard/`, `skills/sac-execution-overlay/`) com resolução relativa (`./PROMPT.md`, `./SKILL.md`), 100% livres de caminhos de máquina e menções ao monorepo privado. Desambiguação de frontmatters comprovada (`sac-context` para gramática e sintaxe de tags; `sac-execution-overlay` para gate cirúrgico de execução). `sac-evolution` excluída e substituída por `GOVERNANCE.md` (modelo Issue -> ADR -> PR -> Review), `CONTRIBUTING.md` e diretório `docs/adr/` com template de ADRs. `prompt_resumido.md` preservado e sanitizado. Todos os 5 critérios do DoD verificados, `check_hygiene.py`, `check_version.py` e `node mcp/smoke.mjs` 100% aprovados.
+
