@@ -4,7 +4,7 @@
 
 - Design: .context/docs/pendentes/sac_public_extraction/bloco_02_melhoria_funcional/design.md
 - Approved by: usuário, 2026-08-19 — autorização explícita para ativar o builder
-- Current: track_05
+- Current: track_06
 
 ## Tracks
 
@@ -14,7 +14,7 @@
 | track_02 | Campo `on=` com vocabulário fechado para ARCH e parser dual para tags legadas | track_01 | APPROVED | 1 |
 | track_03 | AGENTS.md como porta de entrada e camada de atalho de dois níveis nas três skills | track_02 | APPROVED | 1 |
 | track_04 | `_is_covered` avalia contra o conjunto completo; veredicto independente da ordem de caminhos | track_03 | APPROVED | 1 |
-| track_05 | Registro de linguagens com Python, JS/TS e Go, e dogfooding bloqueante na CI | track_04 | CHANGES_REQUIRED | 1 |
+| track_05 | Registro de linguagens com Python, JS/TS e Go, e dogfooding bloqueante na CI | track_04 | APPROVED | 2 |
 | track_06 | file relativo, `_perf.sac_root` removido, orçamento e payload_bytes na unidade emitida | track_05 | PENDING | 0 |
 | track_07 | OVER_SELECT deixa de contar tags auto-incluídas; piso de anchors reportado pelo assess | track_06 | PENDING | 0 |
 | track_08 | Marcador de comentário sem whitelist e vocabulário imperativo PT+EN | track_07 | PENDING | 0 |
@@ -95,6 +95,19 @@ Append entries; never rewrite history.
 - DoD 7: a inspeção de `README.md` confirmou a tabela de primeira classe com Python, JavaScript, JavaScript com JSX, TypeScript, TypeScript com JSX, Go, Dart e PowerShell e suas oito extensões registradas.
 - Regressão e gates: `python3 -m unittest discover -s tests -v`, `node mcp/smoke.mjs`, `python3 .github/scripts/check_hygiene.py`, `python3 .github/scripts/check_version.py`, `python3 src/sac_scan.py validate --root .`, `python3 src/sac_scan.py index-build --root .` e `git diff --check` passaram. A inspeção AST contra `HEAD` imprimiu `_is_covered_unchanged=True`, `_extract_acks_unchanged=True`, `_gather_acks_unchanged=True` e `diff_check_unchanged=True`; `git diff -- AGENTS.md skills src/sac_engine.py` ficou vazio.
 - Terminal: `EXECUTED` após implementação e checagem literal dos sete itens; `CHANGES_REQUIRED` porque os itens 4 e 5 exigem links de execuções reais da CI que este ambiente sem remote não pode gerar. `Current` permanece em `track_05`.
+
+### track_05 — Attempt 2 — 2026-08-20 — EXECUTED + APPROVED
+
+- Outcome: as provas remotas que faltavam foram executadas na mesma PR #6. A REGR de dogfooding sem o alvo coeditado bloqueou o job real; o commit seguinte tocou exatamente `track05DogfoodTest`, sem `SAC-ACK`, e o mesmo job passou. A asserção histórica do Bloco 01 foi ajustada somente na dependência causal que proibia o gate antes do Bloco 02: continua proibindo `continue-on-error` e agora exige o `diff-check` bloqueante estabelecido por esta track.
+- DoD 1: `python3 -m unittest tests/test_symbol_registry.py -v` passou; as fixtures positivas reconheceram todos os símbolos das seis extensões e as negativas tiveram zero falsos positivos para chamada, comentário, string e import.
+- DoD 2: o mesmo approved-test passou em `test_existing_dart_and_powershell_behavior`; as entradas `.dart` e `.ps1` permaneceram literalmente inalteradas.
+- DoD 3: a fixture manual de `guard.rb` com tag SAC imprimiu `fail_closed_exit=1 file=guard.rb`, comprovando falha fechada e arquivo nomeado.
+- DoD 4: a execução real vermelha `https://github.com/MarceloRab/semantic-architecture-context/actions/runs/87779759659`, job `CI / SAC Diff Check (pull_request)`, imprimiu `SAC diff-check: exit 1`, `track05Dogfood [NOT ACKED]` e `uncovered: track05DogfoodTest`.
+- DoD 5: na mesma PR #6, o alvo exato `track05DogfoodTest` foi coeditado sem ACK; a execução real verde `https://github.com/MarceloRab/semantic-architecture-context/actions/runs/32381711142`, job `https://github.com/MarceloRab/semantic-architecture-context/actions/runs/32381711142/job/96466269069`, imprimiu `SAC diff-check: exit 0` e `No SAC violations found`.
+- DoD 6: `rg -n 'continue-on-error' .github/workflows` não encontrou ocorrências; `python3 ci/test_track_09_dod.py` passou e comprovou o comando bloqueante no workflow. O check de `push` é deliberadamente skipped pela condição `github.event_name == 'pull_request'`; o check bloqueante de `pull_request` passou na execução verde acima.
+- DoD 7: inspeção de `README.md` confirmou a matriz de primeira classe com Python, JavaScript, JavaScript com JSX, TypeScript, TypeScript com JSX, Go, Dart e PowerShell.
+- Regressão e gates: `python3 -m unittest discover -s tests -v`, `node mcp/smoke.mjs`, `python3 .github/scripts/check_hygiene.py`, `python3 .github/scripts/check_version.py`, `python3 src/sac_scan.py validate --root .`, `python3 src/sac_scan.py index-build --root .` e `git diff --check` passaram. A inspeção AST contra a base da Track 05 imprimiu `_is_covered_unchanged=True`, `_extract_acks_unchanged=True`, `_gather_acks_unchanged=True` e `diff_check_unchanged=True`; `git diff 23111df -- AGENTS.md skills src/sac_engine.py` ficou vazio; o diff-check local contra a base completa da PR imprimiu `exit 0`.
+- Terminal: `EXECUTED` após produzir e reunir as provas solicitadas; `APPROVED` após checagem literal, neste mesmo chat, dos sete itens numerados. `Current` avança para `track_06`.
 
 ## Pré-condição do bloco
 
