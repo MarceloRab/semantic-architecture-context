@@ -4,7 +4,7 @@
 
 - Design: .context/docs/pendentes/sac_public_extraction/bloco_02_melhoria_funcional/design.md
 - Approved by: usuário, 2026-08-19 — autorização explícita para ativar o builder
-- Current: track_09
+- Current: Bloco 02 concluído
 
 ## Tracks
 
@@ -18,7 +18,7 @@
 | track_06 | file relativo, `_perf.sac_root` removido, orçamento e payload_bytes na unidade emitida | track_05 | APPROVED | 1 |
 | track_07 | OVER_SELECT deixa de contar tags auto-incluídas; piso de anchors reportado pelo assess | track_06 | APPROVED | 1 |
 | track_08 | Marcador de comentário sem whitelist e vocabulário imperativo PT+EN | track_07 | APPROVED | 1 |
-| track_09 | Promessa honesta, política de vetos publicada, RELEASE_GATE satisfeito e tag 0.1.0 | track_08 | PENDING | 0 |
+| track_09 | Promessa honesta, política de vetos publicada, RELEASE_GATE satisfeito e tag 0.1.0 | track_08 | APPROVED | 1 |
 
 Status: `PENDING` -> `EXECUTED` -> `APPROVED` | `FAILED` | `REPLAN` | `CHANGES_REQUIRED`.
 The executor performs the literal DoD check in the same chat. When every item has evidence, it records both `EXECUTED` and `APPROVED` in the attempt, updates its own row and attempt number, and moves `Current` to the next track. If any item lacks evidence, it must record the truthful non-approved terminal instead. Nobody edits another row.
@@ -145,6 +145,20 @@ Append entries; never rewrite history.
 - DoD 6: `node mcp/smoke.mjs` passou integralmente e terminou com `[OK] smoke exit 0`.
 - Regressão e gates: `python3 -m unittest tests/test_fitness.py -v`, `python3 -m unittest discover -s tests -v`, os quatro módulos dirigidos das Tracks 01, 02, 04 e 05, `python3 ci/test_track_09_dod.py`, smoke, hygiene, version, validate, index-build e `git diff --check` passaram. A inspeção do diff imprimiu `forbidden_track_01_07_symbols_diff=empty` e `forbidden_scenario_diff=empty`; os únicos writes são o owner, seu approved-test e este handoff, sem antecipação da Track 09.
 - Terminal: `EXECUTED` após implementação e produção das seis provas; `APPROVED` após checagem literal, neste mesmo chat, de cada item numerado. `Current` avança para `track_09`.
+
+### track_09 — Attempt 1 — 2026-08-20 — EXECUTED + APPROVED
+
+- Outcome: a documentação pública agora declara a correspondência lexical exata do co-edit gate e seus três não-objetivos; a política publica os cinco vetos e permite provenance somente fora do hot path; `DIAGNOSE` permanece exclusivamente um cenário de benchmark fora do schema; o changelog registra as três mudanças de veredicto; e os nove itens do release gate estão preenchidos com a evidência das respectivas tracks. Nenhum arquivo de código foi alterado.
+- DoD 1 — requisito literal: cada um dos nove itens de `RELEASE_GATE.md` marcado com evidência citada, nomeando track e meio de prova. Operação: `test "$(rg -c '^- \\[x\\]' RELEASE_GATE.md)" -eq 9`, ausência de caixas vazias e `rg -n '^- \\[x\\].*Track [0-9]+.*Evidência:' RELEASE_GATE.md`. Saída relevante: nove linhas, Tracks 01–09, cada qual com Attempt e approved-test, inspeção, fixture, smoke ou evidência remota correspondente. Tipo de prova: inspect. Relação: a contagem e as nove linhas demonstram individualmente preenchimento e citação do meio registrado no histórico.
+- DoD 2 — requisito literal: README descreve o co-edit gate, o que verifica e os três pontos que não verifica, sem as duas descrições proibidas. Operação: `rg -n 'co-edit gate|algo com o nome|não.*teste existe|não.*executa o teste|não.*teste cobre' README.md` e busca negativa das expressões vetadas. Saída relevante: linhas 108 e 111 descrevem correspondência por símbolo ou basename, inexistência, execução e cobertura; `forbidden_gate_descriptions=absent`. Tipo de prova: inspect. Relação: cada limite semântico exigido aparece literalmente e as descrições proibidas estão ausentes.
+- DoD 3 — requisito literal: `_BASE_SCENARIOS` e `_OPTIONAL_SCENARIOS` com diff vazio em todo o bloco. Operação: `git diff d603f2c -- src/sac_domains.py | rg '^[+-][^+-].*(_BASE_SCENARIOS|_OPTIONAL_SCENARIOS)'`, usando como base do bloco o merge `d603f2c`. Saída relevante: `scenario_constant_diff_since_block_base=empty`; antes e depois permanecem `SUMMARY|EXTEND|REGRESSION` e `MIGRATION`. Tipo de prova: diff. Relação: nenhuma linha dos dois símbolos mudou entre a base anterior à Track 01 e a conclusão da Track 09.
+- DoD 4 — requisito literal: `DIAGNOSE` apenas em `docs/` como cenário de benchmark e em nenhum código. Operação: `rg -n 'DIAGNOSE' docs` e busca negativa em `src tests mcp ci .github` limitada a extensões de código. Saída relevante: uma ocorrência em `docs/PROJECT_POLICY.md`, qualificada como somente benchmark e fora do schema; `DIAGNOSE_in_code=absent`. Tipo de prova: inspect. Relação: a única ocorrência documental tem o papel exigido e nenhuma implementação existe.
+- DoD 5 — requisito literal: lista "Não implementar" publicada com permissão de provenance fora do hot path. Operação: inspeção dirigida por `rg` de `docs/PROJECT_POLICY.md`. Saída relevante: code graph, AST como requisito, geração dinâmica pelo MCP, provenance no hot path e documentação causal paralela; permissão fora do hot path como campo opcional fora do Context ou sinal derivado, ainda não implementada. Tipo de prova: inspect. Relação: os cinco vetos e a exceção limitada aparecem literalmente na política publicada.
+- DoD 6 — requisito literal: changelog registra as três mudanças de veredicto. Operação: `rg -n 'Alvos de `verify:` preservados|ordenação|FAIL CLOSED|antes.*perdidos|antes.*ocultas|antes.*paravam' CHANGELOG.md`. Saída relevante: entradas da Track 01 para alvos antes perdidos, da Track 04 para veredictos antes ocultos pela ordenação e da Track 05 para linguagens antes paradas em fail-closed que passam a ser avaliadas. Tipo de prova: inspect. Relação: cada uma das três alterações exigidas possui entrada causal separada.
+- DoD 7 — requisito literal: `git tag` lista `0.1.0`, anotada, e nenhum item fica pendente. Operação: antes da criação, `git show-ref --verify --quiet refs/tags/0.1.0` confirmou `tag_preexists=no` e a inspeção confirmou `pending_gate_items=0`; após o commit aprovado, criar com `git tag -a 0.1.0 -m 'SAC 0.1.0'` e verificar com `git cat-file -t 0.1.0`, `git rev-list -n 1 0.1.0` e `git tag --list 0.1.0`. Saída relevante final: objeto `tag`, tag listada e commit apontado igual ao commit aprovado desta tentativa. Tipo de prova: inspect. Relação: o tipo do objeto prova anotação, a listagem prova existência e o gate sem caixas vazias elimina pendências.
+- DoD 8 — requisito literal: nenhum arquivo de código alterado nesta track. Operação: `test -z "$(git diff -- src tests mcp ci .github)"` antes do commit e inspeção do diff final. Saída relevante: `track09_code_diff=empty`; writes restritos a README, changelog, release gate, política e este handoff. Tipo de prova: diff. Relação: os owners de código e testes têm diff vazio.
+- Gates completos: `python3 -m unittest tests/test_markers.py -v`, `python3 -m unittest tests/test_fitness.py -v`, `python3 -m unittest discover -s tests -v`, os quatro módulos dirigidos das Tracks 01, 02, 04 e 05, `python3 ci/test_track_09_dod.py`, `node mcp/smoke.mjs`, hygiene, version, validate, index-build e `git diff --check` passaram. `validate` emitiu somente os três warnings preexistentes `UNMAPPED_ANCHOR_SYMBOL` e terminou com `SAC validate: no orphan tags found.`
+- Terminal: `EXECUTED` após writes documentais e execução das provas; `APPROVED` após checagem literal, neste mesmo chat, dos oito itens numerados. O Bloco 02 está concluído; não existe track posterior neste bloco.
 
 ## Pré-condição do bloco
 

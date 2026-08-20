@@ -7,6 +7,16 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [0.1.0] - 2026-08-20
+
+### Alterado
+- **Alvos de `verify:` preservados**: o parsing termina em `;` ou no fim da linha, de modo que alvos depois de pontos ou vírgulas que antes eram perdidos passam a participar do veredicto do gate (Track 01).
+- **Veredicto independente da ordenação**: `_is_covered` passa a ser avaliado somente depois da coleta do conjunto completo de símbolos e arquivos alterados; violações antes ocultas pela ordem de caminhos passam a ser reportadas, e alvos coeditados deixam de falhar apenas por aparecerem depois (Track 04).
+- **Arquivos antes em `FAIL CLOSED` agora avaliados**: o registro lexical inclui Python, JavaScript/JSX, TypeScript/TSX e Go; arquivos nessas linguagens que antes paravam como linguagem desconhecida agora têm seus símbolos avaliados pelo gate (Track 05).
+
+### Documentação
+- Publicada a semântica exata do co-edit gate, a política de vetos do projeto e o enquadramento de `DIAGNOSE` exclusivamente como cenário de benchmark.
+
 ## [0.1.0-rc] - 2026-08-19
 
 Release candidate consolidando a conclusão do Bloco 01 (SAC como MCP Público independente e universal).
