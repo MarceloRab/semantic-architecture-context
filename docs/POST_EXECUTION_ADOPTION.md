@@ -24,9 +24,10 @@ git -C /caminho/para/semantic-architecture-context cat-file -t 0.1.0
 git -C /caminho/para/semantic-architecture-context rev-list -n 1 0.1.0
 ```
 
-O tipo deve ser `tag` e o commit esperado para esta release é
-`5645b2171c0adf65165acdc3fad7dbed738729b6`. Não mova nem recrie a tag. Se o
-remote apontar para outro commit, interrompa a adoção.
+O tipo deve ser `tag` e o commit esperado para esta release deve corresponder ao
+commit apontado pela tag anotada `0.1.0` (verificado via `git rev-list -n 1 0.1.0` e
+conforme o checklist de `RELEASE_GATE.md`). Não mova nem recrie a tag. Se o remote
+apontar para outro commit, interrompa a adoção.
 
 ## 2. Testar em um projeto novo
 
