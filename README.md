@@ -105,16 +105,16 @@ Reinicie seu host MCP. O agente agora pode invocar:
 
 ## Mecanismo de Verificação: Co-Edit Gate
 
-O SAC utiliza um **co-edit gate** como modelo de verificação estática. Quando uma tag `SAC:REGR` define alvos em `verify: [TargetA, TargetB]`, o verificador lexical do SAC checa se os arquivos e símbolos associados foram co-editados na mesma alteração (diff).
+O SAC utiliza um **co-edit gate** como modelo de verificação estática. Quando uma tag `SAC:REGR` declara alvos em `verify: TargetA, TargetB`, o verificador lexical checa se algo com o nome de cada alvo foi editado na mesma alteração: o nome pode ser um símbolo extraído de um arquivo alterado ou o basename de um arquivo alterado.
 
 > [!NOTE]
-> O co-edit gate é um verificador léxico e determinístico de co-edição de alvos declarados. Ele **não** constitui execução de testes dinâmicos ou garantia formal em runtime, atuando como uma guarda estática de escopo e rastreabilidade para agentes e desenvolvedores.
+> O co-edit gate verifica somente que algo com o nome do alvo foi editado. Ele **não** verifica que um teste existe, **não** executa o teste e **não** verifica que o teste cobre o símbolo protegido. A correspondência lexical de co-edição não é uma garantia de comportamento em runtime.
 
 ---
 
 ## Suporte de Linguagens e Limitações Atuais
 
-Na versão corrente (`0.1.0-rc`), as linguagens reconhecidas pelo co-edit gate são
+Na versão `0.1.0`, as linguagens reconhecidas pelo co-edit gate são
 uma dimensão de primeira classe da matriz de compatibilidade:
 
 | Linguagem | Extensão registrada | Comentário SAC usual |
@@ -136,6 +136,8 @@ em extensões fora desse registro continuam falhando fechado no `diff-check`.
 ## Documentação Adicional
 
 - [Release Gate (Critérios para Tag 0.1.0)](RELEASE_GATE.md)
+- [Política do Projeto e Limites de Implementação](docs/PROJECT_POLICY.md)
+- [Pós-execução: piloto em projeto novo e atualização de consumidores legados](docs/POST_EXECUTION_ADOPTION.md)
 - [Changelog e Histórico de Releases](CHANGELOG.md)
 - [Guia Detalhado de Instalação](docs/INSTALL.md)
 - [Especificação Operacional SAC v2](docs/SAC_V2.md)

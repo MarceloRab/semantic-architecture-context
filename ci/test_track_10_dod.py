@@ -1,49 +1,42 @@
 #!/usr/bin/env python3
 """
-DoD Verification Suite for Track 10 — Release Gate, README Honesto, CHANGELOG e Tag 0.1.0-rc.
+Release lifecycle verification suite originating in Block 01 Track 10.
 
-Automates validation of all 5 DoD criteria for Track 10:
-- DoD 1: RELEASE_GATE.md lists all 9 Block 02 items with empty checkboxes ([ ]).
+The original Track 10 established an unchecked Block 02 gate and the 0.1.0-rc
+tag policy.  Block 02 is now complete, so this permanent CI gate validates the
+released state instead of freezing the repository in its pre-Block-02 state.
+
+Validates:
+- RELEASE_GATE.md lists exactly Tracks 01–09 as checked, each with evidence.
 - DoD 2: README.md describes co-edit gate and lists .dart and .ps1.
 - DoD 3: README.md does NOT contain "prevenção de regressão" or "prova de teste".
-- DoD 4: git tag lists 0.1.0-rc and does NOT list 0.1.0.
+- If tag 0.1.0 is available in the checkout, it is annotated and the gate is complete.
 - DoD 5: No files in src/ or mcp/server.mjs were modified in Track 10.
 """
 
 from pathlib import Path
-import re
 import subprocess
 import sys
 
 
 def test_dod_1_release_gate(repo_root: Path) -> None:
-    """DoD 1: RELEASE_GATE.md lists the 9 items with empty checkboxes pointing to Block 02 tracks."""
+    """The completed Block 02 gate has nine evidenced checked items."""
     gate_file = repo_root / "RELEASE_GATE.md"
     assert gate_file.is_file(), "RELEASE_GATE.md not found"
     content = gate_file.read_text(encoding="utf-8")
 
-    expected_tracks = [
-        ("Track 01", "Truncamento de `verify:`"),
-        ("Track 02", "Campo `on=` com vocabulário fechado para ARCH"),
-        ("Track 03", "AGENTS.md na raiz como porta de entrada"),
-        ("Track 04", "`_is_covered` avaliando contra o conjunto completo"),
-        ("Track 05", "Registro de linguagens (`.py`, `.js`, `.ts`, `.go`)"),
-        ("Track 06", "`file` sempre relativo, `_perf.sac_root` removido"),
-        ("Track 07", "`OVER_SELECT` deixa de contar tags auto-incluídas"),
-        ("Track 08", "Marcador de comentário sem whitelist prefixal"),
-        ("Track 09", "Promessa honesta de co-edit gate consolidada"),
-    ]
+    gate_lines = [line for line in content.splitlines() if line.startswith("- [")]
+    assert len(gate_lines) == 9, f"Expected exactly 9 release items, found {len(gate_lines)}"
 
-    for track_id, expected_snippet in expected_tracks:
-        assert f"- [ ] **{track_id}**:" in content, f"Missing unchecked box for {track_id} in RELEASE_GATE.md"
-        assert expected_snippet in content, f"Missing expected snippet '{expected_snippet}' for {track_id} in RELEASE_GATE.md"
+    for number, line in enumerate(gate_lines, start=1):
+        track_id = f"Track {number:02d}"
+        assert line.startswith(f"- [x] **{track_id}**:"), (
+            f"Missing checked box for {track_id} in RELEASE_GATE.md"
+        )
+        assert "Evidência:" in line, f"Missing cited evidence for {track_id}"
 
-
-    # Ensure no checked boxes in RELEASE_GATE.md
-    checked_boxes = re.findall(r"- \[x\]", content, re.IGNORECASE)
-    assert len(checked_boxes) == 0, f"Found unexpected checked boxes in RELEASE_GATE.md: {len(checked_boxes)}"
-
-    print("  [PASS] DoD 1: RELEASE_GATE.md lists all 9 Block 02 items with empty checkboxes.")
+    assert "- [ ]" not in content, "RELEASE_GATE.md still has a pending item"
+    print("  [PASS] Release gate has exactly 9 checked Block 02 items with cited evidence.")
 
 
 def test_dod_2_readme_coedit_gate_and_languages(repo_root: Path) -> None:
@@ -75,14 +68,22 @@ def test_dod_3_readme_no_unsubstantiated_claims(repo_root: Path) -> None:
     print("  [PASS] DoD 3: README.md contains zero unevidenced regression prevention/test proof claims.")
 
 
-def test_dod_4_git_tag(repo_root: Path) -> None:
-    """DoD 4: git tag lists 0.1.0-rc and does NOT list 0.1.0."""
-    res = subprocess.run(["git", "tag", "-l"], capture_output=True, text=True, cwd=str(repo_root))
-    tags = [t.strip() for t in res.stdout.splitlines() if t.strip()]
+def test_release_tag_if_available(repo_root: Path) -> None:
+    """A fetched final tag must be annotated; absence in a PR checkout is allowed."""
+    res = subprocess.run(
+        ["git", "tag", "--list", "0.1.0"], capture_output=True, text=True, cwd=str(repo_root)
+    )
+    if not res.stdout.strip():
+        print("  [INFO] Final tag 0.1.0 is not present in this checkout; document gate remains authoritative.")
+        return
 
-    assert "0.1.0-rc" in tags, f"Expected tag '0.1.0-rc' in git tags, got {tags}"
-    assert "0.1.0" not in tags, f"Forbidden tag '0.1.0' found in git tags: {tags}"
-    print("  [PASS] DoD 4: git tag lists '0.1.0-rc' and does NOT list '0.1.0'.")
+    tag_type = subprocess.run(
+        ["git", "cat-file", "-t", "0.1.0"], capture_output=True, text=True, cwd=str(repo_root)
+    )
+    assert tag_type.returncode == 0 and tag_type.stdout.strip() == "tag", (
+        "Tag 0.1.0 must be an annotated tag"
+    )
+    print("  [PASS] Available final tag 0.1.0 is annotated and the release gate is complete.")
 
 
 def test_dod_5_no_src_mcp_modifications(repo_root: Path) -> None:
@@ -106,16 +107,11 @@ def main() -> int:
     test_dod_2_readme_coedit_gate_and_languages(repo_root)
     test_dod_3_readme_no_unsubstantiated_claims(repo_root)
     
-    # We execute dod_4 only if tag exists; otherwise instruct caller
-    res_tag = subprocess.run(["git", "tag", "-l"], capture_output=True, text=True, cwd=str(repo_root))
-    tags = [t.strip() for t in res_tag.stdout.splitlines() if t.strip()]
-    if "0.1.0-rc" in tags:
-        test_dod_4_git_tag(repo_root)
-    else:
-        print("  [INFO] Tag '0.1.0-rc' not yet created in Git index (will be tested post-tag).")
+    test_release_tag_if_available(repo_root)
+    test_dod_5_no_src_mcp_modifications(repo_root)
 
     print("============================================")
-    print("SUCCESS: Preliminary Track 10 checks passed.")
+    print("SUCCESS: Release lifecycle checks passed.")
     return 0
 
 
