@@ -17,6 +17,31 @@ from typing import Any, Iterable
 DEFAULT_CONTEXT_MAX_BYTES = 12288
 
 
+def emitted_json(payload: dict) -> str:
+    """Serialize a JSON payload exactly as the CLI writes it (before newline)."""
+    return json.dumps(payload, indent=1)
+
+
+def emitted_json_bytes(payload: dict) -> int:
+    return len(emitted_json(payload).encode("utf-8"))
+
+
+def _relative_warnings(root: str, warnings: list[str]) -> list[str]:
+    from sac_domains import relativize_under_root
+
+    relative: list[str] = []
+    for warning in warnings:
+        match = re.match(r"^(.*):(\d+):(.*)$", warning)
+        if match is None:
+            relative.append(warning)
+            continue
+        relative.append(
+            f"{relativize_under_root(root, match.group(1))}:"
+            f"{match.group(2)}:{match.group(3)}"
+        )
+    return relative
+
+
 # Canonical form:  <marker> SAC:<TAG>: on=<condition> - <Symbol>: <Constraint>
 # where <marker> is the language's inline comment token (// or #).
 _CANONICAL_RE = re.compile(
@@ -552,6 +577,7 @@ def discover_domain(
         abs_paths.append(abs_path)
 
     tags = scan_paths(abs_paths, warnings)
+    warnings = _relative_warnings(root, warnings)
     compact: list[dict] = []
     for tag in tags:
         entry = {
@@ -619,6 +645,7 @@ def build_domain_context(root: str, domain_id: str) -> dict:
         abs_paths.append(abs_path)
 
     tags = scan_paths(abs_paths, warnings)
+    warnings = _relative_warnings(root, warnings)
     anchors = [str(s) for s in (domain.get("anchor_symbols") or [])]
     anchor_set = set(anchors)
     selected = [
@@ -690,9 +717,7 @@ def build_domain_context(root: str, domain_id: str) -> dict:
             "message": "SAC_CONTEXT_MAX_BYTES must be an integer >= 512.",
         }
 
-    payload_bytes = len(
-        json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-    )
+    payload_bytes = emitted_json_bytes(payload)
     if payload_bytes > max_bytes:
         return {
             "error": True,
@@ -931,6 +956,9 @@ def lookup(
         )
         matches = _lookup_symbol(symbol, all_tags, filepath)
 
+    from sac_domains import relativize_under_root
+
+    warnings = _relative_warnings(root, warnings)
     trimmed_warnings, warnings_truncated = _trim_warnings(warnings, trim_warnings_cap)
 
     result = {
@@ -952,6 +980,12 @@ def lookup(
         if truncated:
             any_truncated = True
         match_dict = tag.to_dict()
+        match_dict["file"] = relativize_under_root(root, tag.file)
+        for hop in hop1:
+            if hop.get("found") and isinstance(hop.get("match"), dict):
+                hop["match"]["file"] = relativize_under_root(
+                    root, hop["match"].get("file", "")
+                )
         match_dict["hop1"] = hop1
         result["matches"].append(match_dict)
 
@@ -989,9 +1023,7 @@ def _context_byte_metrics(root: str, domain_id: str) -> tuple[int, int, str] | d
         max_bytes = DEFAULT_CONTEXT_MAX_BYTES
     if max_bytes < 512:
         max_bytes = DEFAULT_CONTEXT_MAX_BYTES
-    payload_bytes = len(
-        json.dumps(probe, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-    )
+    payload_bytes = emitted_json_bytes(probe)
     status = "OK" if payload_bytes <= max_bytes else "OVER_BUDGET"
     return payload_bytes, max_bytes, status
 

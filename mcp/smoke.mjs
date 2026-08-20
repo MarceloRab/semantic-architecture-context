@@ -148,6 +148,43 @@ function writeFixture() {
   return { root, tagged, hop, outside, relTagged, relHop, dottedVerifyTargets };
 }
 
+function assertRelativeAbsoluteRootBytes(root, python, cliPath) {
+  const relativeRoot = path.relative(process.cwd(), root);
+  const args = (rootArg) => [
+    cliPath,
+    "context",
+    "--root",
+    rootArg,
+    "--domain",
+    "smoke_domain",
+    "--json",
+  ];
+  const relative = spawnSync(python, args(relativeRoot), {
+    encoding: "buffer",
+    windowsHide: true,
+    env: process.env,
+  });
+  const absolute = spawnSync(python, args(root), {
+    encoding: "buffer",
+    windowsHide: true,
+    env: process.env,
+  });
+  if (
+    relative.status !== 0 ||
+    absolute.status !== 0 ||
+    !relative.stdout.equals(absolute.stdout)
+  ) {
+    console.error("[FAIL] relative/absolute --root byte parity", {
+      relativeStatus: relative.status,
+      absoluteStatus: absolute.status,
+      relative: relative.stdout.toString("utf8"),
+      absolute: absolute.stdout.toString("utf8"),
+    });
+    process.exit(1);
+  }
+  console.log(`[OK] relative/absolute --root byte parity bytes=${absolute.stdout.length}`);
+}
+
 async function assertDottedVerifyParity(root, tagged, python, cliPath, rawTargets) {
   const payload = await runLookup("SmokeDottedVerify", tagged, {
     root,
@@ -1077,6 +1114,7 @@ async function main() {
   }
 
   const { root, tagged, outside, dottedVerifyTargets } = writeFixture();
+  assertRelativeAbsoluteRootBytes(root, python, cliPath);
   try {
     await assertListDomains(root, python, cliPath);
     await assertContext(root, python, cliPath);
