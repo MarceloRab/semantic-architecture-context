@@ -116,10 +116,19 @@ def install_target(
 
     # Verify templates source
     template_path = sac_repo_root / "templates" / "domains.template.md"
+    agents_template_path = sac_repo_root / "templates" / "AGENTS.template.md"
     if not template_path.is_file():
         err_msg = (
             f"Template file not found at {template_path}. "
             "Error code: sac.installer.template_missing"
+        )
+        report["errors"].append(err_msg)
+        return report
+
+    if not agents_template_path.is_file():
+        err_msg = (
+            f"AGENTS template not found at {agents_template_path}. "
+            "Error code: sac.installer.agents_template_missing"
         )
         report["errors"].append(err_msg)
         return report
@@ -158,8 +167,44 @@ def install_target(
             report["errors"].append(err_msg)
             return report
 
-    # Verify that target responds to list-domains CLI
+    # Ensure AGENTS.md exists with SAC CLI entry point in target_root
+    target_agents_md = target_root / "AGENTS.md"
     scan_script = sac_repo_root / "src" / "sac_scan.py"
+    scan_script_str = scan_script.resolve().as_posix()
+
+    try:
+        with open(agents_template_path, "r", encoding="utf-8") as f:
+            agents_template_content = f.read()
+        sac_agents_block = agents_template_content.replace(
+            "__SAC_SCAN_PATH__", f'"{scan_script_str}"'
+        )
+
+        if not target_agents_md.exists():
+            with open(target_agents_md, "w", encoding="utf-8") as f:
+                f.write(sac_agents_block)
+            report["agents_md_status"] = "created"
+            report["actions"].append("Created AGENTS.md with SAC CLI entry points.")
+        else:
+            with open(target_agents_md, "r", encoding="utf-8") as f:
+                existing_agents = f.read()
+            if "SAC — entrada para agentes" in existing_agents or "Semantic Architecture Context (SAC)" in existing_agents:
+                report["agents_md_status"] = "preserved"
+                report["actions"].append("Preserved existing AGENTS.md with SAC configuration.")
+            else:
+                updated_content = existing_agents.rstrip() + "\n\n---\n\n" + sac_agents_block
+                with open(target_agents_md, "w", encoding="utf-8") as f:
+                    f.write(updated_content)
+                report["agents_md_status"] = "updated"
+                report["actions"].append("Appended SAC CLI entry points to existing AGENTS.md.")
+    except Exception as exc:
+        err_msg = (
+            f"Failed to configure AGENTS.md at {target_agents_md}: {exc}. "
+            "Error code: sac.installer.agents_md_configuration_failed"
+        )
+        report["errors"].append(err_msg)
+        return report
+
+    # Verify that target responds to list-domains CLI
     if not scan_script.is_file():
         err_msg = (
             f"SAC scanner not found at {scan_script}. "
@@ -268,9 +313,17 @@ def format_cli_output(
 
     manifest_status = report.get("manifest_status")
     if manifest_status == "created":
-        lines.append("  - Status: Initialized new .sac/domains.md manifest from template.")
+        lines.append("  - Manifest: Initialized new .sac/domains.md from template.")
     elif manifest_status == "preserved":
-        lines.append("  - Status: Existing .sac/domains.md preserved (100% byte-for-byte).")
+        lines.append("  - Manifest: Existing .sac/domains.md preserved (100% byte-for-byte).")
+
+    agents_md_status = report.get("agents_md_status")
+    if agents_md_status == "created":
+        lines.append("  - Agent Entry: Created AGENTS.md with SAC CLI entry points.")
+    elif agents_md_status == "updated":
+        lines.append("  - Agent Entry: Appended SAC CLI entry points to existing AGENTS.md.")
+    elif agents_md_status == "preserved":
+        lines.append("  - Agent Entry: Existing AGENTS.md preserved.")
 
     if mcp_config:
         lines.append("\n-------------------------------------------------------")
