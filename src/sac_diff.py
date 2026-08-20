@@ -34,6 +34,36 @@ from sac_engine import scan, lookup  # noqa: E402
 # enforcement; AST-based validation is deferred to V2.1 (C4).
 
 _SYMBOL_REGISTRY: dict[str, list[re.Pattern]] = {
+    ".py": [
+        re.compile(r"^\s*class\s+(?P<symbol>[A-Za-z_]\w*)\b"),
+        re.compile(r"^\s*(?:async\s+)?def\s+(?P<symbol>[A-Za-z_]\w*)\s*\("),
+    ],
+    ".js": [
+        re.compile(r"^\s*(?:export\s+)?(?:default\s+)?class\s+(?P<symbol>[A-Za-z_$][\w$]*)\b"),
+        re.compile(r"^\s*(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s+(?P<symbol>[A-Za-z_$][\w$]*)\s*\("),
+        re.compile(r"^\s*(?:export\s+)?(?:const|let|var)\s+(?P<symbol>[A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>"),
+    ],
+    ".jsx": [
+        re.compile(r"^\s*(?:export\s+)?(?:default\s+)?class\s+(?P<symbol>[A-Za-z_$][\w$]*)\b"),
+        re.compile(r"^\s*(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s+(?P<symbol>[A-Za-z_$][\w$]*)\s*\("),
+        re.compile(r"^\s*(?:export\s+)?(?:const|let|var)\s+(?P<symbol>[A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>"),
+    ],
+    ".ts": [
+        re.compile(r"^\s*(?:export\s+)?(?:default\s+)?(?:abstract\s+)?class\s+(?P<symbol>[A-Za-z_$][\w$]*)\b"),
+        re.compile(r"^\s*(?:export\s+)?(?:interface|type|enum)\s+(?P<symbol>[A-Za-z_$][\w$]*)\b"),
+        re.compile(r"^\s*(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s+(?P<symbol>[A-Za-z_$][\w$]*)\s*(?:<[^>]+>\s*)?\("),
+        re.compile(r"^\s*(?:export\s+)?(?:const|let|var)\s+(?P<symbol>[A-Za-z_$][\w$]*)\s*(?::[^=]+)?=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>"),
+    ],
+    ".tsx": [
+        re.compile(r"^\s*(?:export\s+)?(?:default\s+)?(?:abstract\s+)?class\s+(?P<symbol>[A-Za-z_$][\w$]*)\b"),
+        re.compile(r"^\s*(?:export\s+)?(?:interface|type|enum)\s+(?P<symbol>[A-Za-z_$][\w$]*)\b"),
+        re.compile(r"^\s*(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s+(?P<symbol>[A-Za-z_$][\w$]*)\s*(?:<[^>]+>\s*)?\("),
+        re.compile(r"^\s*(?:export\s+)?(?:const|let|var)\s+(?P<symbol>[A-Za-z_$][\w$]*)\s*(?::[^=]+)?=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>"),
+    ],
+    ".go": [
+        re.compile(r"^\s*func\s+(?:\([^)]*\)\s*)?(?P<symbol>[A-Za-z_]\w*)\s*(?:\[[^]]+\]\s*)?\("),
+        re.compile(r"^\s*type\s+(?P<symbol>[A-Za-z_]\w*)\s+(?:struct|interface)\b"),
+    ],
     ".dart": [
         # class Foo, abstract class Foo, extension Foo, enum Foo, mixin Foo
         re.compile(r"^\s*(?:abstract\s+)?(?:class|extension|enum|mixin)\s+(?P<symbol>\w+)"),

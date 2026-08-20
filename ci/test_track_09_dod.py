@@ -6,7 +6,8 @@ Automates validation of all 6 DoD criteria for Track 09:
 - DoD 1 & 5: Runtime matrix (Python 3.11, 3.12, 3.13) x (Node 22, 24).
 - DoD 2: Zero pull_request_target and zero ${{ inline expressions in run: blocks.
 - DoD 3: permissions: contents: read and timeout-minutes explicitly declared.
-- DoD 4: Zero continue-on-error and zero diff-check in public CI.
+- DoD 4: Zero continue-on-error; the Block 01 prohibition on diff-check is
+  superseded by the blocking Block 02 gate.
 - DoD 6: Hygiene gate scans full git commit history.
 """
 
@@ -65,11 +66,12 @@ def test_dod_permissions_and_timeouts(ci_content: str) -> None:
     print(f"  [PASS] DoD 3: 'permissions: contents: read' and deterministic 'timeout-minutes' declared across all {len(jobs_match)} jobs.")
 
 
-def test_dod_no_continue_on_error_and_no_diff_check(ci_content: str) -> None:
-    """DoD 4: Zero continue-on-error and zero diff-check in ci.yml."""
+def test_dod_no_continue_on_error_and_blocking_diff_check(ci_content: str) -> None:
+    """DoD 4 plus Block 02: no masking and a blocking diff-check in ci.yml."""
     assert "continue-on-error" not in ci_content, "Found forbidden 'continue-on-error' in ci.yml"
-    assert "diff-check" not in ci_content, "Found forbidden 'diff-check' job/step in ci.yml (D14: Block 02)"
-    print("  [PASS] DoD 4: Zero continue-on-error and zero diff-check in public CI workflow.")
+    assert "diff-check:" in ci_content, "Missing Block 02 diff-check job in ci.yml"
+    assert "src/sac_scan.py diff-check" in ci_content, "Missing Block 02 diff-check command in ci.yml"
+    print("  [PASS] DoD 4 + Block 02: Zero continue-on-error and blocking diff-check in public CI.")
 
 
 def test_dod_hygiene_history_scan(repo_root: Path) -> None:
@@ -92,7 +94,7 @@ def main() -> int:
     test_dod_matrix(ci_content)
     test_dod_security(ci_content, repo_root)
     test_dod_permissions_and_timeouts(ci_content)
-    test_dod_no_continue_on_error_and_no_diff_check(ci_content)
+    test_dod_no_continue_on_error_and_blocking_diff_check(ci_content)
     test_dod_hygiene_history_scan(repo_root)
     print("===========================================")
     print("SUCCESS: All Track 09 DoD criteria verified.")
