@@ -5,7 +5,7 @@
 2. Follow the required approach; choose only mechanically equivalent details.
 3. Read only causal dependencies and record mechanically necessary unexpected writes.
 4. Replan on any DoD, strategy or authority gap; do not replace it with insight, heuristic or a merely functional result.
-5. No silent fallback, masked error, weak critical heuristic, TODO/stub, optional improvement or self-certification.
+5. No silent fallback, masked error, weak critical heuristic, TODO/stub, optional improvement or approval without literal evidence for every DoD item.
 [/governance]
 
 ## Goal
@@ -55,4 +55,4 @@ Uma tag SAC pode ser escrita em qualquer linguagem cujo comentário comece com u
 ## Handoff
 
 - File: .context/docs/pendentes/sac_public_extraction/bloco_02_melhoria_funcional/handoff.md
-- Terminal: `EXECUTED`; review requires a separate manual trigger
+- Terminal: record `EXECUTED` + `APPROVED` after the executor checks every DoD item in this chat; then return the robust prompt for `track_09` in a new chat
