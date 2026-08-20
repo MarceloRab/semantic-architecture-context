@@ -10,6 +10,27 @@ permissions:
   contents: read
 
 jobs:
+  diff-check:
+    name: SAC Diff Check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run blocking SAC diff-check
+        env:
+          SAC_PR_BODY: ${{ github.event.pull_request.body }}
+        run: python3 src/sac_scan.py diff-check --root . --base "origin/${GITHUB_BASE_REF}"
+
   hygiene:
     name: Repository Hygiene & Version Gates
     runs-on: ubuntu-latest
@@ -93,4 +114,3 @@ jobs:
 
       - name: Run Track 10 DoD test suite
         run: python ci/test_track_10_dod.py
-

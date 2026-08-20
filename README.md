@@ -114,11 +114,22 @@ O SAC utiliza um **co-edit gate** como modelo de verificação estática. Quando
 
 ## Suporte de Linguagens e Limitações Atuais
 
-Na versão corrente (`0.1.0-rc`), o SAC possui suporte ativo para:
-- **`.dart`** (comentários `// SAC:`)
-- **`.ps1`** (comentários `# SAC:`)
+Na versão corrente (`0.1.0-rc`), as linguagens reconhecidas pelo co-edit gate são
+uma dimensão de primeira classe da matriz de compatibilidade:
 
-Esta é uma limitação técnica conhecida do Bloco 01. O registro formal de suporte poliglota (`.py`, `.js`, `.ts`, `.go`) e o endurecimento do parser de cláusulas estão mapeados no [Release Gate](RELEASE_GATE.md) como requisitos obrigatórios para a tag final `0.1.0` no Bloco 02.
+| Linguagem | Extensão registrada | Comentário SAC usual |
+|---|---|---|
+| Python | `.py` | `# SAC:` |
+| JavaScript | `.js` | `// SAC:` |
+| JavaScript com JSX | `.jsx` | `// SAC:` |
+| TypeScript | `.ts` | `// SAC:` |
+| TypeScript com JSX | `.tsx` | `// SAC:` |
+| Go | `.go` | `// SAC:` |
+| Dart | `.dart` | `// SAC:` |
+| PowerShell | `.ps1` | `# SAC:` |
+
+O reconhecimento de declarações é lexical e stdlib-only. Arquivos com tags SAC
+em extensões fora desse registro continuam falhando fechado no `diff-check`.
 
 ---
 
@@ -133,4 +144,3 @@ Esta é uma limitação técnica conhecida do Bloco 01. O registro formal de sup
 - [Guia de Contribuição](CONTRIBUTING.md)
 - [Código de Conduta](CODE_OF_CONDUCT.md)
 - [Licença MIT](LICENSE)
-
