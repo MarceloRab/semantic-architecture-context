@@ -190,7 +190,8 @@ Forma legada é reconhecida pelo `sac_engine` mas **não é validada** pelo `val
 | `read_error <exc>` | Arquivo não pode ser lido | Verificar permissões |
 | `decode_error <exc>` | Encoding inválido | Arquivo corrompido ou binário |
 | `unknown_tag SAC:FOO` | Tag com tipo desconhecido | Corrigir gramática ou adicionar ao registry |
-| `invalid_trigger tag=<tipo> trigger=<valor> allowed=<lista>` | Tag parseável usa trigger fora da matriz canônica | HALT; corrigir por proposta literal aprovada |
+| `invalid_trigger tag=<tipo> trigger=<valor> allowed=<lista>` | Tag parseável usa `on=` fora do vocabulário ARCH ou do padrão REGR/DEPRECATED | HALT; corrigir por proposta literal aprovada |
+| `legacy_trigger` | Tag usa `RULE|CONSTRAINT|WARNING|CRITICAL`; continua visível com condição vazia | Migrar por proposta literal para `on=<condition>` |
 | `arch_imperative_required` | `SAC:ARCH` não contém `MUST`, `NEVER` ou `ONLY` | HALT; tornar a invariante imperativa sem inventar semântica |
 | `regr_verify_required` | `SAC:REGR` não possui alvos terminais `verify:` | HALT; preservar a constraint existente e propor alvos concretos |
 | `deprecated_replacement_required` | `SAC:DEPRECATED` sem `replacement:<símbolo|none>` terminal | Corrigir a tag; uso novo permanece bloqueado |

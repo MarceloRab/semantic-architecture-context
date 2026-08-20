@@ -72,20 +72,20 @@ function writeFixture() {
       "def SmokeArch():",
       "    pass",
       "",
-      "# SAC:REGR: WARNING - SmokeRegr: you MUST verify: SmokeHop.",
+      "# SAC:REGR: on=behavior_change - SmokeRegr: you MUST verify: SmokeHop.",
       "def SmokeRegr():",
       "    pass",
       "",
-      `# SAC:REGR: WARNING - SmokeDottedVerify: you MUST verify: ${dottedVerifyTargets.join(", ")}.`,
+      `# SAC:REGR: on=verify_change - SmokeDottedVerify: you MUST verify: ${dottedVerifyTargets.join(", ")}.`,
       "def SmokeDottedVerify():",
       "    pass",
       "",
-      "# SAC:ARCH: CONSTRAINT - SmokeDeprecated: MUST remain a contiguous multi-tag declaration.",
-      "# SAC:DEPRECATED: WARNING - SmokeDeprecated: MUST NOT be used by new code; replacement: SmokeArch",
+      "# SAC:ARCH: on=ordering - SmokeDeprecated: MUST remain a contiguous multi-tag declaration.",
+      "# SAC:DEPRECATED: on=new_dependency - SmokeDeprecated: MUST NOT be used by new code; replacement: SmokeArch",
       "def SmokeDeprecated():",
       "    pass",
       "",
-      "# SAC:DEPRECATED: CRITICAL - SmokeMissingReplacement: MUST NOT be used by new code",
+      "# SAC:DEPRECATED: on=new_dependency - SmokeMissingReplacement: MUST NOT be used by new code",
       "def SmokeMissingReplacement():",
       "    pass",
       "",
@@ -95,7 +95,7 @@ function writeFixture() {
   fs.writeFileSync(
     hop,
     [
-      "# SAC:ARCH: RULE - SmokeHop: MUST fill hop1 from domain scope.",
+      "# SAC:ARCH: on=boundary - SmokeHop: MUST fill hop1 from domain scope.",
       "def SmokeHop():",
       "    pass",
       "",
@@ -105,15 +105,15 @@ function writeFixture() {
   fs.writeFileSync(
     outside,
     [
-      "# SAC:ARCH: RULE - SmokeOutside: MUST NOT appear in scoped hop1/discover.",
+      "# SAC:ARCH: on=boundary - SmokeOutside: MUST NOT appear in scoped hop1/discover.",
       "def SmokeOutside():",
       "    pass",
       "",
-      "# SAC:ARCH: RULE - SmokeWeakArch: describes behavior without an imperative.",
+      "# SAC:ARCH: on=ssot - SmokeWeakArch: describes behavior without an imperative.",
       "def SmokeWeakArch():",
       "    pass",
       "",
-      "# SAC:REGR: RULE - SmokeInvalidRegr: MUST preserve behavior.",
+      "# SAC:REGR: on=X - SmokeInvalidRegr: MUST preserve behavior.",
       "def SmokeInvalidRegr():",
       "    pass",
       "",
@@ -622,7 +622,7 @@ function assertPreOnboardLookup(root, outside, python, cliPath) {
   const warnings = (validReport.warnings || []).join("\n");
   for (const expected of [
     "arch_imperative_required",
-    "invalid_trigger tag=REGR trigger=RULE allowed=WARNING|CRITICAL",
+    "invalid_trigger tag=REGR trigger=X allowed=[a-z][a-z0-9_]{2,47}",
     "regr_verify_required",
   ]) {
     if (!warnings.includes(expected)) {
@@ -670,7 +670,7 @@ async function assertValidateTagBlocks(root, python, cliPath) {
   const orphan = path.join(root, "src", "orphan.py");
   fs.writeFileSync(
     orphan,
-    "# SAC:DEPRECATED: CRITICAL - SmokeOrphan: MUST NOT be used; replacement: none\n",
+    "# SAC:DEPRECATED: on=new_dependency - SmokeOrphan: MUST NOT be used; replacement: none\n",
     "utf8",
   );
   const invalid = spawnSync(python, args, {
@@ -697,11 +697,11 @@ async function assertCapillarity(root, python, cliPath) {
   fs.writeFileSync(
     capSrc,
     [
-      "# SAC:ARCH: RULE - CapArch: MUST remain the SUMMARY/EXTEND anchor.",
+      "# SAC:ARCH: on=ssot - CapArch: MUST remain the SUMMARY/EXTEND anchor.",
       "def CapArch():",
       "    pass",
       "",
-      "# SAC:REGR: WARNING - CapRegr: you MUST verify: CapArch.",
+      "# SAC:REGR: on=anchor_change - CapRegr: you MUST verify: CapArch.",
       "def CapRegr():",
       "    pass",
       "",
