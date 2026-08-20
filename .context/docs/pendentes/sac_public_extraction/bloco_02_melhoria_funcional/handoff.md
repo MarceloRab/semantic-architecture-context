@@ -4,7 +4,7 @@
 
 - Design: .context/docs/pendentes/sac_public_extraction/bloco_02_melhoria_funcional/design.md
 - Approved by: usuário, 2026-08-19 — autorização explícita para ativar o builder
-- Current: track_07
+- Current: track_08
 
 ## Tracks
 
@@ -16,7 +16,7 @@
 | track_04 | `_is_covered` avalia contra o conjunto completo; veredicto independente da ordem de caminhos | track_03 | APPROVED | 1 |
 | track_05 | Registro de linguagens com Python, JS/TS e Go, e dogfooding bloqueante na CI | track_04 | APPROVED | 2 |
 | track_06 | file relativo, `_perf.sac_root` removido, orçamento e payload_bytes na unidade emitida | track_05 | APPROVED | 1 |
-| track_07 | OVER_SELECT deixa de contar tags auto-incluídas; piso de anchors reportado pelo assess | track_06 | PENDING | 0 |
+| track_07 | OVER_SELECT deixa de contar tags auto-incluídas; piso de anchors reportado pelo assess | track_06 | APPROVED | 1 |
 | track_08 | Marcador de comentário sem whitelist e vocabulário imperativo PT+EN | track_07 | PENDING | 0 |
 | track_09 | Promessa honesta, política de vetos publicada, RELEASE_GATE satisfeito e tag 0.1.0 | track_08 | PENDING | 0 |
 
@@ -120,6 +120,19 @@ Append entries; never rewrite history.
 - DoD 6: a regressão plantada substituiu temporariamente, no engine, a relativização do `file` de contexto por `tag.file`; `node mcp/smoke.mjs` falhou no novo caso com `[FAIL] relative/absolute --root byte parity` e `planted_root_leak_exit=1`; o arquivo original foi restaurado antes dos gates e do commit.
 - Regressão e gates: `python3 -m unittest discover -s tests -v`, os quatro módulos dirigidos das Tracks 01, 02, 04 e 05, `python3 ci/test_track_09_dod.py`, `node mcp/smoke.mjs`, hygiene, version, validate, index-build e `git diff --check` passaram. A inspeção do diff confirmou ausência de alterações em gramática, `_is_covered`, SAC-ACK, registro lexical, fixtures da Track 05, workflow, README, AGENTS.md e skills.
 - Terminal: `EXECUTED` após implementação e execução das provas; `APPROVED` após checagem literal, neste mesmo chat, dos seis itens numerados acima. `Current` avança para `track_07`.
+
+### track_07 — Attempt 1 — 2026-08-20 — EXECUTED + APPROVED
+
+- Outcome: `_context_selected_keys` agora devolve separadamente o conjunto completo selecionado e o subconjunto selecionado por anchor; somente esse subconjunto participa do numerador de `uncontracted_context_tag_count`. O conjunto completo continua governando `context_unfit_claims` e claims contratadas. `assess` publica `anchor_floor_symbols`, derivado exclusivamente dos símbolos das claims ARCH, e `anchor_excess_symbols`, enquanto o template explica que reduzir anchors exige reduzir antes claims ARCH.
+- DoD 1: `python3 -m unittest tests/test_fitness.py -v` passou; `test_policy_selected_regr_without_claim_keeps_fit` adicionou `Extra` como REGR auto-incluída sem claim ao domínio base FIT e comprovou `fitness_status == "FIT"` e `uncontracted_context_tag_count == 0`.
+- DoD 2: o mesmo approved-test passou; `test_unclaimed_arch_selected_by_anchor_remains_over_select` adicionou a ARCH `ExtraArch` aos anchors sem claim e comprovou `fitness_status == "OVER_SELECT"` e excedente igual a 1.
+- DoD 3: o mesmo approved-test passou; `test_missing_regression_role_claim_remains_too_thin` manteve uma claim no cenário REGRESSION com papel ARCH, portanto sem a claim de papel exata `REGRESSION:REGR`, e comprovou `fitness_status == "TOO_THIN"` e `REGRESSION:REGR` em `missing_roles`.
+- DoD 4: o mesmo approved-test passou; `test_arch_claim_whose_symbol_is_not_anchor_remains_unfit` removeu `Core` dos anchors, manteve suas duas claims ARCH e comprovou `fitness_status == "UNFIT"` e as duas claims em `context_unfit_claims`.
+- DoD 5: a fixture manual `/tmp/track07_assess_fixture` foi avaliada com `python3 src/sac_scan.py capillarity --root /tmp/track07_assess_fixture --domain fixture --json`; a inspeção imprimiu `anchor_floor_symbols=['Core']`, `anchor_excess_symbols=['Surplus']`, `arch_claim_symbols=['Core']` e `floor_equals_arch_claim_symbols=True`.
+- DoD 6: a fixture imutável `/tmp/track07_context_fixture` foi consultada por `getSacContextPayload` no worktree detached do baseline `5885ea3` e no worktree implementado, sem normalização. `diff -u` terminou 0 e ambos os payloads tiveram SHA-256 literal `8ad4be212d00333cc1cb3bbff692662e8b93c2310c3b3079b756b4502244e786`.
+- DoD 7: antes e depois, o único domínio do manifesto do repositório, `sac_core`, foi executado com `python3 src/sac_scan.py capillarity --root . --domain sac_core --json`; a comparação imprimiu `before_status=UNRATED after_status=UNRATED before_fitness=None after_fitness=None before_quality=FAIL after_quality=FAIL` e `repository_domains_worsened=0 checked=1`.
+- Regressão e gates: os dois comandos de unittest geral/dirigido da Track 07, os quatro módulos dirigidos das Tracks 01, 02, 04 e 05, `python3 ci/test_track_09_dod.py`, `node mcp/smoke.mjs`, hygiene, version, validate, index-build e `git diff --check` passaram. A inspeção do diff confirmou writes somente no owner de fitness, no approved-test, no template causal e neste handoff, sem mudanças em parsing, gramática, cenários, `_is_covered`, SAC-ACK, registro lexical, Context, MCP, workflow, README, AGENTS.md ou skills das Tracks 01–06.
+- Terminal: `EXECUTED` após implementação e produção das sete provas; `APPROVED` após checagem literal, neste mesmo chat, de cada item numerado. `Current` avança para `track_08`.
 
 ## Pré-condição do bloco
 

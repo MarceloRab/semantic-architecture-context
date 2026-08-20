@@ -1065,21 +1065,35 @@ _SCENARIO_REQUIRED_TAG_TYPE = {
 }
 
 
+@dataclass(frozen=True)
+class _ContextSelection:
+    all_keys: set[tuple[str, str, str]]
+    anchor_keys: set[tuple[str, str, str]]
+    policy_keys: set[tuple[str, str, str]]
+
+
 def _context_selected_keys(
     root: str,
     tags: list[SacTag],
     anchor_symbols: list[str],
-) -> set[tuple[str, str, str]]:
-    """Keys (filepath_norm, symbol, tag_type) that get_sac_context would select."""
+) -> _ContextSelection:
+    """Return all keys with explicit anchor and automatic-policy origins."""
     from sac_domains import normalize_repo_path, relativize_under_root
 
     anchors = set(anchor_symbols)
     selected: set[tuple[str, str, str]] = set()
+    selected_by_anchor: set[tuple[str, str, str]] = set()
+    selected_by_policy: set[tuple[str, str, str]] = set()
     for tag in tags:
         if tag.symbol in anchors or tag.tag_type in {"REGR", "DEPRECATED"}:
             rel = relativize_under_root(root, tag.file)
-            selected.add((normalize_repo_path(rel), tag.symbol, tag.tag_type))
-    return selected
+            key = (normalize_repo_path(rel), tag.symbol, tag.tag_type)
+            selected.add(key)
+            if tag.symbol in anchors:
+                selected_by_anchor.add(key)
+            if tag.tag_type in {"REGR", "DEPRECATED"}:
+                selected_by_policy.add(key)
+    return _ContextSelection(selected, selected_by_anchor, selected_by_policy)
 
 
 def _evaluate_context_fitness(
@@ -1088,6 +1102,7 @@ def _evaluate_context_fitness(
     declared_claims: list[dict],
     matched_claims: list[dict],
     context_selected: set[tuple[str, str, str]],
+    context_selected_by_anchor: set[tuple[str, str, str]],
 ) -> dict[str, Any]:
     """Fitness axis B: domain usable for agent context assembly.
 
@@ -1123,6 +1138,7 @@ def _evaluate_context_fitness(
             context_unfit_claims.append(dict(claim))
 
     contracted_in_context = 0
+    contracted_anchor_keys: set[tuple[str, str, str]] = set()
     for claim in matched_claims:
         key = (
             normalize_repo_path(claim["filepath"]),
@@ -1131,7 +1147,11 @@ def _evaluate_context_fitness(
         )
         if key in context_selected:
             contracted_in_context += 1
-    uncontracted_context_count = max(0, len(context_selected) - contracted_in_context)
+            if key in context_selected_by_anchor:
+                contracted_anchor_keys.add(key)
+    uncontracted_context_count = max(
+        0, len(context_selected_by_anchor) - len(contracted_anchor_keys)
+    )
 
     if uncovered_scenarios or missing_roles:
         fitness = "TOO_THIN"
@@ -1207,7 +1227,16 @@ def assess_domain_capillarity(root: str, domain_id: str) -> dict:
 
     tags = scan_paths(abs_paths, warnings)
     anchors = [str(s) for s in (domain.get("anchor_symbols") or [])]
-    context_selected = _context_selected_keys(root, tags, anchors)
+    context_selection = _context_selected_keys(root, tags, anchors)
+    context_selected = context_selection.all_keys
+    anchor_floor = sorted(
+        {
+            str(claim.get("symbol"))
+            for claim in (contract.get("coverage_claims") or [])
+            if claim.get("tag_type") == "ARCH"
+        }
+    )
+    anchor_excess = sorted(set(anchors) - set(anchor_floor))
 
     def _quality(status: str, fitness: str | None) -> str:
         # Axis C OVER_BUDGET is WARN-only when coverage (A) is SUFFICIENT and
@@ -1227,6 +1256,8 @@ def assess_domain_capillarity(root: str, domain_id: str) -> dict:
             "context_unfit_claims": [],
             "uncontracted_context_tag_count": 0,
             "context_selected_tag_count": len(context_selected),
+            "anchor_floor_symbols": anchor_floor,
+            "anchor_excess_symbols": anchor_excess,
         }
         return {
             "mode": "capillarity",
@@ -1362,6 +1393,7 @@ def assess_domain_capillarity(root: str, domain_id: str) -> dict:
         declared_claims=claims,
         matched_claims=matched_claims,
         context_selected=context_selected,
+        context_selected_by_anchor=context_selection.anchor_keys,
     )
 
     missing_claims.sort(
@@ -1399,6 +1431,8 @@ def assess_domain_capillarity(root: str, domain_id: str) -> dict:
         "payload_status": payload_status,
         "payload_warn": payload_warn,
         "warnings": list(warnings) + extra_warnings,
+        "anchor_floor_symbols": anchor_floor,
+        "anchor_excess_symbols": anchor_excess,
         **fitness,
     })
 
