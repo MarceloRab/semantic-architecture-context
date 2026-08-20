@@ -43,9 +43,15 @@ def _relative_warnings(root: str, warnings: list[str]) -> list[str]:
 
 
 # Canonical form:  <marker> SAC:<TAG>: on=<condition> - <Symbol>: <Constraint>
-# where <marker> is the language's inline comment token (// or #).
+# A marker is one to four non-alphanumeric comment-prefix characters. A lone
+# quote is excluded so a quoted SAC string is not mistaken for a comment;
+# triple quotes remain a valid comment prefix.
+_MARKER = r'(?P<marker>\s*(?:[^\w\s"\']{1,4}|["\']{3})\s*)'
+_SAC_HEADER_RE = re.compile(rf"^{_MARKER}SAC:")
+_CLOSING_DELIMITER_RE = re.compile(r'\s*(?:-->|\*/|""")\s*$')
+
 _CANONICAL_RE = re.compile(
-    r"^(?P<marker>\s*(?://|#)\s*)"
+    rf"^{_MARKER}"
     r"SAC:(?P<tag>ARCH|REGR|DEPRECATED):\s+"
     r"on=(?P<trigger>\S+)\s+"
     r"-\s+"
@@ -56,7 +62,7 @@ _CANONICAL_RE = re.compile(
 # Previous canonical vocabulary. It remains readable through the same dual-parser
 # flow, but maps to an empty condition because severity was never executable.
 _LEGACY_CANONICAL_RE = re.compile(
-    r"^(?P<marker>\s*(?://|#)\s*)"
+    rf"^{_MARKER}"
     r"SAC:(?P<tag>ARCH|REGR|DEPRECATED):\s+"
     r"(?P<legacy_trigger>RULE|CONSTRAINT|WARNING|CRITICAL)\s+"
     r"-\s+"
@@ -146,7 +152,9 @@ _LEGACY_TRIGGERS = {
     "DEPRECATED": ("WARNING", "CRITICAL"),
 }
 _CHANGE_TRIGGER_RE = re.compile(r"[a-z][a-z0-9_]{2,47}\Z")
-_ARCH_IMPERATIVE_RE = re.compile(r"\b(?:MUST|NEVER|ONLY)\b")
+_ARCH_IMPERATIVE_RE = re.compile(
+    r"\b(?:MUST|NEVER|ONLY|DEVE|NUNCA|SOMENTE|APENAS)\b"
+)
 
 
 @dataclass(frozen=True)
@@ -277,8 +285,10 @@ def _tag_contract_warnings(tag: SacTag) -> list[str]:
 
 def _parse_line(line: str) -> tuple[SacTag | None, list[str]]:
     """Parse a SAC line and return every canonical contract warning."""
-    if "SAC:" not in line:
+    if not _is_sac_header(line):
         return None, []
+
+    line = _CLOSING_DELIMITER_RE.sub("", line)
 
     if "If modifying" in line:
         tag, parse_warnings = _parse_legacy_regr(line)
@@ -303,7 +313,7 @@ def _parse_line(line: str) -> tuple[SacTag | None, list[str]]:
 
 def _is_sac_header(line: str) -> bool:
     """Return True if the line contains a SAC marker."""
-    return "SAC:" in line
+    return _SAC_HEADER_RE.match(line) is not None
 
 
 def _extract_unknown_tag_warning(line: str, file: str, line_no: int) -> str | None:
@@ -311,10 +321,10 @@ def _extract_unknown_tag_warning(line: str, file: str, line_no: int) -> str | No
     if not _is_sac_header(line):
         return None
     # Cheap scan: SAC:<TAG>:
-    m = re.search(r"SAC:([A-Za-z0-9_]+):", line)
+    m = re.match(rf"^{_MARKER}SAC:(?P<tag>[A-Za-z0-9_]+):", line)
     if not m:
         return None
-    tag_type = m.group(1)
+    tag_type = m.group("tag")
     if tag_type not in _KNOWN_TAGS:
         return f"{file}:{line_no}: unknown_tag SAC:{tag_type}"
     return None

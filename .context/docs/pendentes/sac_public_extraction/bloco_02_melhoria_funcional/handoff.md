@@ -4,7 +4,7 @@
 
 - Design: .context/docs/pendentes/sac_public_extraction/bloco_02_melhoria_funcional/design.md
 - Approved by: usuário, 2026-08-19 — autorização explícita para ativar o builder
-- Current: track_08
+- Current: track_09
 
 ## Tracks
 
@@ -17,7 +17,7 @@
 | track_05 | Registro de linguagens com Python, JS/TS e Go, e dogfooding bloqueante na CI | track_04 | APPROVED | 2 |
 | track_06 | file relativo, `_perf.sac_root` removido, orçamento e payload_bytes na unidade emitida | track_05 | APPROVED | 1 |
 | track_07 | OVER_SELECT deixa de contar tags auto-incluídas; piso de anchors reportado pelo assess | track_06 | APPROVED | 1 |
-| track_08 | Marcador de comentário sem whitelist e vocabulário imperativo PT+EN | track_07 | PENDING | 0 |
+| track_08 | Marcador de comentário sem whitelist e vocabulário imperativo PT+EN | track_07 | APPROVED | 1 |
 | track_09 | Promessa honesta, política de vetos publicada, RELEASE_GATE satisfeito e tag 0.1.0 | track_08 | PENDING | 0 |
 
 Status: `PENDING` -> `EXECUTED` -> `APPROVED` | `FAILED` | `REPLAN` | `CHANGES_REQUIRED`.
@@ -133,6 +133,18 @@ Append entries; never rewrite history.
 - DoD 7: antes e depois, o único domínio do manifesto do repositório, `sac_core`, foi executado com `python3 src/sac_scan.py capillarity --root . --domain sac_core --json`; a comparação imprimiu `before_status=UNRATED after_status=UNRATED before_fitness=None after_fitness=None before_quality=FAIL after_quality=FAIL` e `repository_domains_worsened=0 checked=1`.
 - Regressão e gates: os dois comandos de unittest geral/dirigido da Track 07, os quatro módulos dirigidos das Tracks 01, 02, 04 e 05, `python3 ci/test_track_09_dod.py`, `node mcp/smoke.mjs`, hygiene, version, validate, index-build e `git diff --check` passaram. A inspeção do diff confirmou writes somente no owner de fitness, no approved-test, no template causal e neste handoff, sem mudanças em parsing, gramática, cenários, `_is_covered`, SAC-ACK, registro lexical, Context, MCP, workflow, README, AGENTS.md ou skills das Tracks 01–06.
 - Terminal: `EXECUTED` após implementação e produção das sete provas; `APPROVED` após checagem literal, neste mesmo chat, de cada item numerado. `Current` avança para `track_08`.
+
+### track_08 — Attempt 1 — 2026-08-20 — EXECUTED + APPROVED
+
+- Outcome: o reconhecimento de tags agora usa a forma ancorada espaço inicial → prefixo de comentário não alfanumérico de até quatro caracteres → `SAC:`, sem whitelist de linguagens; aspas isoladas de literal não satisfazem a forma, enquanto aspas triplas permanecem marcador. Delimitadores `-->`, `*/` e `"""` no fim da linha são removidos antes do parsing dos campos. O vocabulário imperativo ARCH inclui os termos portugueses exigidos sem remover os termos ingleses.
+- DoD 1: `python3 -m unittest tests/test_markers.py -v` passou; `test_supported_non_alphanumeric_markers` percorreu `--`, `%`, `;`, `<!-- -->`, `/* */` e `"""`, obteve uma tag para cada fixture, sem warnings nem delimitador final na constraint.
+- DoD 2: o mesmo approved-test passou; `test_existing_slash_and_hash_markers_remain_supported` comprovou que `// ` e `# ` continuam produzindo o símbolo `Existing` sem warnings.
+- DoD 3: o mesmo approved-test passou; `test_quoted_string_is_ignored_while_real_tag_is_scanned` varreu uma fixture única com `"SAC:ARCH: ..."` e uma tag real `-- SAC:ARCH: ...`, obtendo exatamente `['RealTag']` e nenhum warning.
+- DoD 4: o mesmo approved-test passou; `test_html_closer_is_removed_before_verify_parsing` comprovou `verify == ['A', 'B']` e ausência de `-->` em constraint e símbolo. A prova manual adicional imprimiu `html_verify=['A', 'B'] closer_in_constraint=False` e o dicionário completo sem o fechamento em qualquer campo.
+- DoD 5: o mesmo approved-test passou; `test_portuguese_imperative_and_missing_imperative` comprovou warnings vazios para `DEVE` e `['arch_imperative_required']` para a constraint sem qualquer imperativo.
+- DoD 6: `node mcp/smoke.mjs` passou integralmente e terminou com `[OK] smoke exit 0`.
+- Regressão e gates: `python3 -m unittest tests/test_fitness.py -v`, `python3 -m unittest discover -s tests -v`, os quatro módulos dirigidos das Tracks 01, 02, 04 e 05, `python3 ci/test_track_09_dod.py`, smoke, hygiene, version, validate, index-build e `git diff --check` passaram. A inspeção do diff imprimiu `forbidden_track_01_07_symbols_diff=empty` e `forbidden_scenario_diff=empty`; os únicos writes são o owner, seu approved-test e este handoff, sem antecipação da Track 09.
+- Terminal: `EXECUTED` após implementação e produção das seis provas; `APPROVED` após checagem literal, neste mesmo chat, de cada item numerado. `Current` avança para `track_09`.
 
 ## Pré-condição do bloco
 
