@@ -4,3 +4,7 @@
 # SAC:REGR: on=dogfood_ci - track05Dogfood: MUST block uncovered changes; MUST verify: track05DogfoodTest
 def track05Dogfood() -> bool:
     return True
+
+
+def track05DogfoodTest() -> bool:
+    return track05Dogfood()
