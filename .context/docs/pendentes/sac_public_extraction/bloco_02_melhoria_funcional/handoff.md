@@ -4,7 +4,7 @@
 
 - Design: .context/docs/pendentes/sac_public_extraction/bloco_02_melhoria_funcional/design.md
 - Approved by: usuário, 2026-08-19 — autorização explícita para ativar o builder
-- Current: track_03
+- Current: track_04
 
 ## Tracks
 
@@ -12,7 +12,7 @@
 | --- | --- | --- | --- | --- |
 | track_01 | verify: termina em `;` ou fim de linha; nenhum alvo descartado em silêncio | none | APPROVED | 1 |
 | track_02 | Campo `on=` com vocabulário fechado para ARCH e parser dual para tags legadas | track_01 | APPROVED | 1 |
-| track_03 | AGENTS.md como porta de entrada e camada de atalho de dois níveis nas três skills | track_02 | PENDING | 0 |
+| track_03 | AGENTS.md como porta de entrada e camada de atalho de dois níveis nas três skills | track_02 | APPROVED | 1 |
 | track_04 | `_is_covered` avalia contra o conjunto completo; veredicto independente da ordem de caminhos | track_03 | PENDING | 0 |
 | track_05 | Registro de linguagens com Python, JS/TS e Go, e dogfooding bloqueante na CI | track_04 | PENDING | 0 |
 | track_06 | file relativo, `_perf.sac_root` removido, orçamento e payload_bytes na unidade emitida | track_05 | PENDING | 0 |
@@ -58,6 +58,18 @@ Append entries; never rewrite history.
 - DoD 7: `rg -n 'Decisão|ssot.*boundary.*ordering.*state.*exclusive.*ownership|Compatibilidade|legacy_trigger' docs/adr/0001-sac-on-condition.md` comprovou a ADR, a decisão, o vocabulário fechado completo e a política de compatibilidade.
 - Regressão e gates: `python3 -m unittest tests/test_verify_parse.py -v`, `node mcp/smoke.mjs`, `python3 .github/scripts/check_hygiene.py` e `git diff --check` passaram. Inspeção programática comparando `HEAD:src/sac_engine.py` ao worktree imprimiu `track_01_verify_regex_and_parser_diff=empty` para `_VERIFY_TERMINAL_RE`, `_VERIFY_TARGET_RE` e `_parse_verify`.
 - Terminal: `EXECUTED` após implementação e execução das provas; `APPROVED` após checagem literal, neste mesmo chat, dos sete itens numerados acima.
+
+### track_03 — Attempt 1 — 2026-08-20 — EXECUTED + APPROVED
+
+- Outcome: `AGENTS.md` agora é a porta tool-neutral para o manifesto, a gramática em três linhas, o limite de busca de `files:`, a CLI sem MCP e os três atalhos disjuntos. Cada skill tem um `PROMPT.md` curto que aponta diretamente ao `SKILL.md`, traz no topo o bloco sem MCP e contém a tabela frase→contrato; o conteúdo exclusivo de `prompt_resumido.md` foi absorvido antes de sua remoção. A overlay ficou com numeração única e apenas o pipeline completo.
+- DoD 1: a leitura dirigida `sed -n '1,120p' AGENTS.md` indicou `.sac/domains.md`; `sed -n '1,120p' .sac/domains.md` identificou `sac_core`; e o comando publicado `python3 src/sac_scan.py context --root . --domain sac_core --json`, validado por Python, imprimiu `manual_route=PASS domain=sac_core constraints_field=present selected_count=0`, comprovando o caminho completo sem MCP a partir somente da porta.
+- DoD 2: `rg -n 'files:.*limite de busca, não fila de leitura' AGENTS.md` encontrou literalmente a afirmação na linha 11.
+- DoD 3: `test ! -e skills/sac-onboard/prompt_resumido.md` passou; uma comparação de cada linha não vazia de `git show HEAD:skills/sac-onboard/prompt_resumido.md` contra o novo `skills/sac-onboard/PROMPT.md` imprimiu `absorbed_nonempty_lines=19 missing=0`; `git diff -- skills/sac-onboard` mostrou a remoção e a absorção no atalho.
+- DoD 4: a inspeção em loop dos três paths `skills/{sac-context,sac-onboard,sac-execution-overlay}/PROMPT.md` comprovou `prompt=present no_mcp=top phrase_contract=present` para cada skill.
+- DoD 5: inspeção Python de `skills/sac-execution-overlay/PROMPT.md` imprimiu `numbering=unique numbers=['1', '2', '3', '4'] pipeline_count=1 pipeline=complete` e comparou literalmente `boot → Route → Context ou bounded-unmapped → Verify/Discover → Capillarity(on-demand) → Gate`.
+- DoD 6: inspeção dos três prompts e de `AGENTS.md` confirmou três literais e três destinos distintos (`SAC`, `SAC ONBOARD <id>`, `SAC TAG`), nenhum Write autorizado por atalho, e apenas `APROVAR SAC REGISTER <id>` / `APROVAR SAC TAG_DELTA <id>` como autorizações condicionadas ao contrato.
+- Regressão e gates: `python3 -m unittest tests/test_trigger_on.py -v`, `python3 -m unittest tests/test_verify_parse.py -v`, `node mcp/smoke.mjs`, `python3 .github/scripts/check_hygiene.py` e `git diff --check` passaram. `test -z "$(git diff -- src)"` imprimiu `engine_diff_empty`, comprovando nenhuma alteração no parsing de `verify:`, em `on=`, no vocabulário fechado, nas validações ou na compatibilidade legada.
+- Terminal: `EXECUTED` após implementação e execução das provas; `APPROVED` após checagem literal, neste mesmo chat, dos seis itens numerados acima.
 
 ## Pré-condição do bloco
 
