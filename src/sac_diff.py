@@ -380,6 +380,7 @@ def diff_check(
     registry_exts = _registry_extensions()
 
     changed_symbols: list[ChangedSymbol] = []
+    changed_symbols_by_file: dict[str, list[ChangedSymbol]] = {}
     unknown_language_files: list[dict] = []
     violations: list[Violation] = []
 
@@ -412,8 +413,14 @@ def diff_check(
                 )
             symbol_map[symbol].line_numbers.add(line_no)
 
-        for symbol_name, changed in symbol_map.items():
-            changed_symbols.append(changed)
+        file_symbols = list(symbol_map.values())
+        changed_symbols_by_file[file_path] = file_symbols
+        changed_symbols.extend(file_symbols)
+
+    for file_path in changed_lines:
+        full_path = os.path.join(root, file_path)
+        for changed in changed_symbols_by_file.get(file_path, []):
+            symbol_name = changed.symbol
             result = lookup(symbol_name, root, filepath=full_path)
             for match in result.get("matches", []):
                 tag_type = match.get("tag_type")
