@@ -4,7 +4,7 @@
 
 - Design: .context/docs/pendentes/sac_public_extraction/bloco_02_melhoria_funcional/design.md
 - Approved by: usuário, 2026-08-19 — autorização explícita para ativar o builder
-- Current: track_04
+- Current: track_05
 
 ## Tracks
 
@@ -13,7 +13,7 @@
 | track_01 | verify: termina em `;` ou fim de linha; nenhum alvo descartado em silêncio | none | APPROVED | 1 |
 | track_02 | Campo `on=` com vocabulário fechado para ARCH e parser dual para tags legadas | track_01 | APPROVED | 1 |
 | track_03 | AGENTS.md como porta de entrada e camada de atalho de dois níveis nas três skills | track_02 | APPROVED | 1 |
-| track_04 | `_is_covered` avalia contra o conjunto completo; veredicto independente da ordem de caminhos | track_03 | PENDING | 0 |
+| track_04 | `_is_covered` avalia contra o conjunto completo; veredicto independente da ordem de caminhos | track_03 | APPROVED | 1 |
 | track_05 | Registro de linguagens com Python, JS/TS e Go, e dogfooding bloqueante na CI | track_04 | PENDING | 0 |
 | track_06 | file relativo, `_perf.sac_root` removido, orçamento e payload_bytes na unidade emitida | track_05 | PENDING | 0 |
 | track_07 | OVER_SELECT deixa de contar tags auto-incluídas; piso de anchors reportado pelo assess | track_06 | PENDING | 0 |
@@ -69,6 +69,18 @@ Append entries; never rewrite history.
 - DoD 5: inspeção Python de `skills/sac-execution-overlay/PROMPT.md` imprimiu `numbering=unique numbers=['1', '2', '3', '4'] pipeline_count=1 pipeline=complete` e comparou literalmente `boot → Route → Context ou bounded-unmapped → Verify/Discover → Capillarity(on-demand) → Gate`.
 - DoD 6: inspeção dos três prompts e de `AGENTS.md` confirmou três literais e três destinos distintos (`SAC`, `SAC ONBOARD <id>`, `SAC TAG`), nenhum Write autorizado por atalho, e apenas `APROVAR SAC REGISTER <id>` / `APROVAR SAC TAG_DELTA <id>` como autorizações condicionadas ao contrato.
 - Regressão e gates: `python3 -m unittest tests/test_trigger_on.py -v`, `python3 -m unittest tests/test_verify_parse.py -v`, `node mcp/smoke.mjs`, `python3 .github/scripts/check_hygiene.py` e `git diff --check` passaram. `test -z "$(git diff -- src)"` imprimiu `engine_diff_empty`, comprovando nenhuma alteração no parsing de `verify:`, em `on=`, no vocabulário fechado, nas validações ou na compatibilidade legada.
+- Terminal: `EXECUTED` após implementação e execução das provas; `APPROVED` após checagem literal, neste mesmo chat, dos seis itens numerados acima.
+
+### track_04 — Attempt 1 — 2026-08-20 — EXECUTED + APPROVED
+
+- Outcome: `diff-check` agora conclui a coleta de símbolos de todos os arquivos alterados antes de executar `lookup()`, filtrar REGR e avaliar `verify:`. `_is_covered`, as duas regras de cobertura e o mecanismo `SAC-ACK` permaneceram byte a byte inalterados; o `CHANGELOG` registra a mudança de veredicto como breaking do gate.
+- DoD 1: `python3 -m unittest tests/test_is_covered.py -v` passou; `test_test_and_aaa_path_orders_have_identical_verdicts` executou o mesmo alvo em `test/pay_test.dart` e `aaa/pay_test.dart` e comparou literalmente os veredictos `[0, 0]`.
+- DoD 2: a fixture Git manual (`tmp=$(mktemp -d); git -C "$tmp" init -q; ...; python3 src/sac_diff.py --root "$tmp" --base HEAD^`) criou fonte alterada em `lib/pay.dart` e teste alterado em `test/pay_test.dart`; a saída registrou `SAC diff-check: exit 0`, os símbolos `lib/pay.dart:charge` e `test/pay_test.dart:testChargeIdem`, e `manual_fixture_exit=0`.
+- DoD 3: o approved-test `test_untouched_verify_target_remains_a_violation` comprovou alvo `testNotChanged` não tocado, `uncovered == ["testNotChanged"]` e exit 1.
+- DoD 4: o approved-test `test_ack_releases_exactly_the_named_symbol` forneceu `SAC-ACK: charge`, comprovou ACK reconhecido exatamente como `["charge"]` e manteve somente a violação de `refund`, com exit 1.
+- DoD 5: inspeção AST entre `HEAD:src/sac_diff.py` e o worktree imprimiu `_is_covered_diff=empty`; `git diff -U0 HEAD -- src/sac_diff.py` mostrou hunks somente no laço de `diff_check`, sem qualquer mudança nas regras (a) e (b). A mesma inspeção imprimiu `_extract_acks_diff=empty` e `_gather_acks_diff=empty`.
+- DoD 6: inspeção literal de `CHANGELOG.md` confirmou a seção `Breaking` e o registro de que a avaliação após o conjunto completo muda o comportamento do gate, podendo expor violações reais antes ocultas pela ordem.
+- Regressão e gates: `python3 -m unittest discover -s tests -v`, `python3 -m unittest tests/test_verify_parse.py -v`, `python3 -m unittest tests/test_trigger_on.py -v`, `node mcp/smoke.mjs`, `python3 .github/scripts/check_hygiene.py`, `python3 .github/scripts/check_version.py`, `python3 src/sac_scan.py validate --root .`, `python3 src/sac_scan.py index-build --root .` e `git diff --check` passaram. O smoke completo terminou com `[OK] smoke exit 0`.
 - Terminal: `EXECUTED` após implementação e execução das provas; `APPROVED` após checagem literal, neste mesmo chat, dos seis itens numerados acima.
 
 ## Pré-condição do bloco

@@ -11,6 +11,9 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 Release candidate consolidando a conclusão do Bloco 01 (SAC como MCP Público independente e universal).
 
+### Breaking
+- **Veredicto do gate `diff-check` independente da ordem dos caminhos**: a cobertura `verify:` agora é avaliada somente após reunir todos os símbolos e arquivos alterados. Esta correção muda o comportamento do gate: PRs que antes passavam porque um alvo ainda não havia sido visto podem agora falhar com a violação real, enquanto alvos coeditados deixam de exigir `SAC-ACK` apenas por aparecerem depois na ordenação do diff.
+
 ### Adicionado
 - **Repositório Público Independente**: Repositório extraído e auditado (`AUDIT.md`), sob licença permissiva MIT e Código de Conduta Contributor Covenant v2.1.
 - **Superfície MCP Única em Node ESM**: Servidor MCP stdio em `mcp/server.mjs` como autoridade única de interface MCP, eliminando o legado Python MCP.
