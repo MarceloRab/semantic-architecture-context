@@ -20,8 +20,16 @@
 | track_08 | Marcador de comentário sem whitelist e vocabulário imperativo PT+EN | track_07 | PENDING | 0 |
 | track_09 | Promessa honesta, política de vetos publicada, RELEASE_GATE satisfeito e tag 0.1.0 | track_08 | PENDING | 0 |
 
-Status: `PENDING` -> `EXECUTED` | `FAILED` | `REPLAN` -> `APPROVED` | `CHANGES_REQUIRED` | `REPLAN`.
-Execution writes its own row status and attempt number. Review writes the post-verdict status and moves `Current` on `APPROVED`. Nobody edits another row.
+Status: `PENDING` -> `EXECUTED` -> `APPROVED` | `FAILED` | `REPLAN` | `CHANGES_REQUIRED`.
+The executor performs the literal DoD check in the same chat. When every item has evidence, it records both `EXECUTED` and `APPROVED` in the attempt, updates its own row and attempt number, and moves `Current` to the next track. If any item lacks evidence, it must record the truthful non-approved terminal instead. Nobody edits another row.
+
+## Correção de rota — 2026-08-20
+
+- Authority: usuário.
+- Review is no longer a separate manual trigger. It is a literal DoD check performed by the same agent that executes the track.
+- Approval is not inferred from implementation or green tests alone: every numbered DoD item must have its requested proof recorded in the attempt.
+- A successful attempt records the sequence `EXECUTED` + `APPROVED` in the same history entry and leaves the track row as `APPROVED`.
+- At completion, the agent must return a robust, self-contained prompt for executing **only the next track in a new chat**. The prompt must name the track and dependency already approved; require reading its track file, this handoff and only causal dependencies; require literal Goal, Semantic authority, Required approach and DoD; require tests and requested proof; require commit and PR; require the same-chat DoD check; and require updating this handoff plus returning the following track's prompt. For `track_09`, replace the following-track prompt with the explicit release/tag operational handoff required by its DoD.
 
 ## Attempts
 
