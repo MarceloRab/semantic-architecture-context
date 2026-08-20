@@ -9,11 +9,10 @@ Operar o índice de domínios e as tags SAC sem heurística. Tags no fonte são 
 
 ## Boot obrigatório
 
-1. Ler integralmente `prompt_resumido.md` apenas como entrada.
-2. Abrir e seguir o `PROMPT.md` irmão **antes de qualquer análise ou ferramenta**.
-3. Ler esta skill antes de propor ou executar Write.
-4. Fixar um modo: `ASSESS`, `REGISTER` ou `TAG_DELTA`.
-5. Se o modo não estiver literal no pedido, usar `ASSESS`.
+1. Usar o `PROMPT.md` irmão como entrada única **antes de qualquer análise ou ferramenta**; ele aponta diretamente para esta skill.
+2. Ler esta skill antes de propor ou executar Write.
+3. Fixar um modo: `ASSESS`, `REGISTER` ou `TAG_DELTA`.
+4. Se o modo não estiver literal no pedido, usar `ASSESS`.
 
 **Nunca inferir autorização:** “novo domain”, “atualizar domain”, “pode avaliar”, “use sac-onboard”, conhecimento do harness ou aprovação genérica não autorizam Write nem criação de linhas.
 

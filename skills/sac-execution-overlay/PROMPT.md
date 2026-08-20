@@ -1,23 +1,37 @@
-Ative sac-execution-overlay. Contrato COR-GATE (tags = SSOT; MCP = cérebro de busca):
+# SAC — atalho de execução
 
-0. Qualquer intenção de código/arquitetura → `list_sac_domains()` antes do primeiro Read.
-1. Exatamente 1 intent → auto-route + `get_sac_context`; zero → `sac_scope: unmapped` + busca bounded; múltiplos → HALT.
-2. Sem domínio: `fd` só em diretórios objetivos, depois `rg` scoped e `bat` por intervalo; sem limite objetivo → HALT.
-3. `rg` scoped é permitido; nunca contornar busca ampla bloqueada com PowerShell equivalente.
-4. Domínio resolvido → carregar Context uma vez para esse único domínio: anchors + todas `REGR`/`DEPRECATED` + hop1; cachear por sessão.
-5. `context_payload_too_large` / `payload_warn=OVER_BUDGET` → zero constraints no Context; MUST `discover_sac` + `get_sac_constraints`; MUST NOT thin `files:`/tags/claims; sem truncar.
-6. Alvo conhecido → `get_sac_constraints(symbol, filepath, domain_id)`; erro de rota/membership/path → PARAR.
-7. MCP down → CLI+jq anunciado com o mesmo contrato; nunca fingir MCP OK.
-8. Reportar `sac_scope`, `context_domains_loaded=1|0`, `search_scope`, `files_scanned` separado de arquivos abertos+motivo, `deprecated_risk`, `domain_index_status`, evidência e `sac_perf`; non-anchor ≠ orphan e inferência ≠ evidência.
-9. `domain.files` é limite de busca, não fila: abrir só o alvo primário e arquivos adicionais com motivo objetivo (`verify`/hop1, import/chamada direta ou staleness).
-10. Tag parseada pode ser não canônica: warning canônico ou item `REGR verify` fora de `[A-Za-z_][A-Za-z0-9_.$-]*` → `INSUFFICIENT`/HALT; nunca inventar correção.
-11. Missing anchor/file ou alvo necessário fora do domínio → `suspected_stale`; encaminhar `sac-onboard mode=ASSESS`, nunca auto-write.
-12. REGISTER só indexa; TAG_DELTA é o único modo que altera tag e exige comando+tabela literais. EXECUTE material fora do domínio → HALT.
-13. `lookup --pre-onboard` é exclusivo do `sac-onboard` com scope explícito; nesta overlay → HALT.
-14. Capillarity **cold path** only — nunca boot READ/EXECUTE; onboard ASSESS ou auditoria explícita; **proibido revert** por capillarity.
-15. DoD: get_sac_context missing=[] → responder/editar; sem turno 2 de auditoria de agente.
+## Sem MCP
 
-Pipeline: boot → list_sac_domains → get_sac_context → Verify se alvo → edit/read. Onboard = sac-onboard separado.
-15. `domain.files` é limite de busca, não fila; proibido abrir todos os arquivos listados.
+```bash
+python3 src/sac_scan.py list-domains --root . --json
+python3 src/sac_scan.py context --root . --domain <id> --json
+```
+
+Use `SAC` para ativar `sac-execution-overlay` em READ/EXECUTE, sem autorização de Write. Leia agora o [`SKILL.md`](./SKILL.md) irmão, que contém o contrato; se o caminho relativo não resolver, pare e reporte.
+
+## Frase do usuário → contrato derivado
+
+| Frase | Contrato derivado |
+|---|---|
+| `SAC` | `sac-execution-overlay`; READ/EXECUTE sem autorização de Write |
+| `Implementar <mudança>` | `mode=EXECUTE`; derivar Route da intenção, carregar Context e verificar o alvo antes de editar |
+| `Corrigir bug <descrição>` | `mode=EXECUTE`; derivar Route da descrição, carregar Context e verificar código/teste causal antes de editar |
+| `Entender` / `explicar <código ou arquitetura>` | `mode=READ`; derivar Route, carregar Context e responder sem Write |
+| Só apontar este `PROMPT.md` sem uma intenção | **PAUSE**; perguntar se deseja implementar, corrigir bug ou consultar código; zero busca até a resposta |
+| `Criar domínio <id> em <escopo>` | Encaminhar para `sac-onboard`, `mode=ASSESS` read-only; não implementar nem escrever tags |
+| `Atualizar domínio <id>` | Encaminhar para `sac-onboard`, `mode=ASSESS` read-only; não implementar nem escrever tags |
+| `SAC ONBOARD <id>` | `sac-onboard`, `mode=ASSESS` read-only por default |
+| `SAC TAG` | `sac-context`; consultar gramática, sem autorização de Write |
+| `APROVAR SAC REGISTER <id>` | `REGISTER`, somente quando o literal e as pré-condições do contrato existirem |
+| `APROVAR SAC TAG_DELTA <id>` | `TAG_DELTA`, somente quando o literal, a tabela e as pré-condições do contrato existirem |
+
+Os três atalhos são disjuntos e nenhum autoriza Write. Somente os dois literais `APROVAR` acima podem autorizá-lo nos limites do contrato.
+
+Não exigir que o usuário forneça `mode`, `domain_id` ou nomes de ferramentas quando a intenção permite derivá-los pelo Route. Perguntar apenas quando a rota for ambígua ou faltar o recorte objetivo exigido pelo contrato.
+
+1. Route antes do primeiro Read; um intent carrega um Context, zero usa `bounded-unmapped`, múltiplos param.
+2. `files:` é limite de busca, não fila de leitura; Verify/Discover são focados e Capillarity é somente on-demand.
+3. Warning canônico, erro de rota/membership/path ou MCP+CLI indisponíveis em alvo tagueado exigem parada conforme o contrato.
+4. Gate e reporte escopo, arquivos abertos com motivo, risco deprecated, staleness e performance.
 
 Pipeline: boot → Route → Context ou bounded-unmapped → Verify/Discover → Capillarity(on-demand) → Gate.
