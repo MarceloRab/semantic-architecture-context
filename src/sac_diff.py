@@ -336,6 +336,8 @@ def _gather_acks(base: str | None, pr_body: str | None, root: str) -> set[str]:
                 ["git", "log", f"{base}..HEAD", "--format=%B"],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 check=False,
                 cwd=root,
             )
@@ -527,6 +529,8 @@ def _git_diff(base: str, root: str) -> str:
             ["git", "diff", f"{base}...HEAD"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             check=False,
             cwd=root,
         )
