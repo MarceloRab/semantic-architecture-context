@@ -64,6 +64,7 @@ function writeFixture() {
   const tagged = path.join(src, "tagged.py");
   const hop = path.join(src, "hop.py");
   const outside = path.join(src, "outside.py");
+  const dottedVerifyTargets = ["SmokeHop.method", "SmokeHop"];
   fs.writeFileSync(
     tagged,
     [
@@ -73,6 +74,10 @@ function writeFixture() {
       "",
       "# SAC:REGR: WARNING - SmokeRegr: you MUST verify: SmokeHop.",
       "def SmokeRegr():",
+      "    pass",
+      "",
+      `# SAC:REGR: WARNING - SmokeDottedVerify: you MUST verify: ${dottedVerifyTargets.join(", ")}.`,
+      "def SmokeDottedVerify():",
       "    pass",
       "",
       "# SAC:ARCH: CONSTRAINT - SmokeDeprecated: MUST remain a contiguous multi-tag declaration.",
@@ -140,7 +145,22 @@ function writeFixture() {
     ].join("\n"),
     "utf8",
   );
-  return { root, tagged, hop, outside, relTagged, relHop };
+  return { root, tagged, hop, outside, relTagged, relHop, dottedVerifyTargets };
+}
+
+async function assertDottedVerifyParity(root, tagged, python, cliPath, rawTargets) {
+  const payload = await runLookup("SmokeDottedVerify", tagged, {
+    root,
+    python,
+    cliPath,
+    domainId: "smoke_domain",
+  });
+  const payloadTargets = payload.matches?.[0]?.verify;
+  if (!deepEqual(rawTargets, payloadTargets)) {
+    console.error("[FAIL] dotted verify raw-line/MCP parity", rawTargets, payloadTargets);
+    process.exit(1);
+  }
+  console.log(`[OK] dotted verify raw-line≡MCP targets=${payloadTargets.join(",")}`);
 }
 
 async function assertParity(label, symbol, root, filepath, python, cliPath, domainId) {
@@ -1056,7 +1076,7 @@ async function main() {
     process.exit(1);
   }
 
-  const { root, tagged, outside } = writeFixture();
+  const { root, tagged, outside, dottedVerifyTargets } = writeFixture();
   try {
     await assertListDomains(root, python, cliPath);
     await assertContext(root, python, cliPath);
@@ -1074,6 +1094,7 @@ async function main() {
       python,
       cliPath,
     );
+    await assertDottedVerifyParity(root, tagged, python, cliPath, dottedVerifyTargets);
     await assertHop1Scoped(root, tagged, python, cliPath);
     await assertGateBypassedAttestation(root, tagged, outside, python, cliPath);
     await assertEnvironmentErrors(root, python, cliPath);
