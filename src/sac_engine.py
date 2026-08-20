@@ -17,12 +17,23 @@ from typing import Any, Iterable
 DEFAULT_CONTEXT_MAX_BYTES = 12288
 
 
-# Canonical form:  <marker> SAC:<TAG>: <TRIGGER> - <Symbol>: <Constraint>
+# Canonical form:  <marker> SAC:<TAG>: on=<condition> - <Symbol>: <Constraint>
 # where <marker> is the language's inline comment token (// or #).
 _CANONICAL_RE = re.compile(
     r"^(?P<marker>\s*(?://|#)\s*)"
     r"SAC:(?P<tag>ARCH|REGR|DEPRECATED):\s+"
-    r"(?P<trigger>\S+)\s+"
+    r"on=(?P<trigger>\S+)\s+"
+    r"-\s+"
+    r"(?P<symbol>[^:]+):\s*"
+    r"(?P<constraint>.*)$"
+)
+
+# Previous canonical vocabulary. It remains readable through the same dual-parser
+# flow, but maps to an empty condition because severity was never executable.
+_LEGACY_CANONICAL_RE = re.compile(
+    r"^(?P<marker>\s*(?://|#)\s*)"
+    r"SAC:(?P<tag>ARCH|REGR|DEPRECATED):\s+"
+    r"(?P<legacy_trigger>RULE|CONSTRAINT|WARNING|CRITICAL)\s+"
     r"-\s+"
     r"(?P<symbol>[^:]+):\s*"
     r"(?P<constraint>.*)$"
@@ -31,7 +42,7 @@ _CANONICAL_RE = re.compile(
 # Legacy REGR form, still parsed per contract C6:
 #   // SAC:REGR: <TRIGGER> - If modifying <symbol>, ... verify: a, b.
 _LEGACY_REGR_RE = re.compile(
-    r"SAC:REGR:\s+(?P<trigger>\S+)\s+"
+    r"SAC:REGR:\s+(?P<legacy_trigger>WARNING|CRITICAL)\s+"
     r"-\s+"
     r"If modifying\s+(?P<symbol>[^,]+),\s+"
     r".*?"
@@ -102,10 +113,14 @@ _HOP1_CAP = 10
 # Known SAC tag types and canonical trigger matrix.
 _KNOWN_TAGS = frozenset({"ARCH", "REGR", "DEPRECATED"})
 _ALLOWED_TRIGGERS = {
+    "ARCH": ("ssot", "boundary", "ordering", "state", "exclusive", "ownership"),
+}
+_LEGACY_TRIGGERS = {
     "ARCH": ("RULE", "CONSTRAINT"),
     "REGR": ("WARNING", "CRITICAL"),
     "DEPRECATED": ("WARNING", "CRITICAL"),
 }
+_CHANGE_TRIGGER_RE = re.compile(r"[a-z][a-z0-9_]{2,47}\Z")
 _ARCH_IMPERATIVE_RE = re.compile(r"\b(?:MUST|NEVER|ONLY)\b")
 
 
@@ -160,11 +175,16 @@ def _parse_verify(constraint: str) -> tuple[list[str], list[str]]:
     return targets, warnings
 
 
-def _parse_canonical(line: str) -> tuple[SacTag | None, list[str]]:
-    match = _CANONICAL_RE.match(line)
+def _parse_canonical(
+    line: str, pattern: re.Pattern[str] = _CANONICAL_RE
+) -> tuple[SacTag | None, list[str]]:
+    match = pattern.match(line)
     if not match:
         return None, []
     tag_type = match.group("tag")
+    legacy_trigger = match.groupdict().get("legacy_trigger")
+    if legacy_trigger and legacy_trigger not in _LEGACY_TRIGGERS[tag_type]:
+        return None, []
     constraint = match.group("constraint").strip()
     verify: list[str] = []
     replacement: str | None = None
@@ -179,7 +199,7 @@ def _parse_canonical(line: str) -> tuple[SacTag | None, list[str]]:
         file="",
         line=0,
         tag_type=tag_type,
-        trigger=match.group("trigger"),
+        trigger=match.groupdict().get("trigger") or "",
         symbol=match.group("symbol").strip(),
         constraint=constraint,
         verify=verify,
@@ -196,7 +216,7 @@ def _parse_legacy_regr(line: str) -> tuple[SacTag | None, list[str]]:
         file="",
         line=0,
         tag_type="REGR",
-        trigger=match.group("trigger"),
+        trigger="",
         symbol=match.group("symbol").strip(),
         constraint=match.group(0).strip(),
         verify=verify,
@@ -206,11 +226,20 @@ def _parse_legacy_regr(line: str) -> tuple[SacTag | None, list[str]]:
 def _tag_contract_warnings(tag: SacTag) -> list[str]:
     """Return canonical contract warnings without hiding a parseable tag."""
     warnings: list[str] = []
-    allowed = _ALLOWED_TRIGGERS[tag.tag_type]
-    if tag.trigger not in allowed:
+    if not tag.trigger:
+        pass
+    elif tag.tag_type == "ARCH" and tag.trigger not in _ALLOWED_TRIGGERS["ARCH"]:
+        allowed = _ALLOWED_TRIGGERS["ARCH"]
         warnings.append(
             f"invalid_trigger tag={tag.tag_type} trigger={tag.trigger} "
             f"allowed={'|'.join(allowed)}"
+        )
+    elif tag.tag_type in {"REGR", "DEPRECATED"} and not _CHANGE_TRIGGER_RE.fullmatch(
+        tag.trigger
+    ):
+        warnings.append(
+            f"invalid_trigger tag={tag.tag_type} trigger={tag.trigger} "
+            r"allowed=[a-z][a-z0-9_]{2,47}"
         )
     if tag.tag_type == "ARCH" and not _ARCH_IMPERATIVE_RE.search(tag.constraint):
         warnings.append("arch_imperative_required")
@@ -229,15 +258,19 @@ def _parse_line(line: str) -> tuple[SacTag | None, list[str]]:
     if "If modifying" in line:
         tag, parse_warnings = _parse_legacy_regr(line)
         if tag is not None:
-            return tag, parse_warnings + _tag_contract_warnings(tag)
+            return tag, parse_warnings + ["legacy_trigger"] + _tag_contract_warnings(tag)
 
     tag, parse_warnings = _parse_canonical(line)
     if tag is not None:
         return tag, parse_warnings + _tag_contract_warnings(tag)
 
+    tag, parse_warnings = _parse_canonical(line, _LEGACY_CANONICAL_RE)
+    if tag is not None:
+        return tag, parse_warnings + ["legacy_trigger"] + _tag_contract_warnings(tag)
+
     tag, parse_warnings = _parse_legacy_regr(line)
     if tag is not None:
-        return tag, parse_warnings + _tag_contract_warnings(tag)
+        return tag, parse_warnings + ["legacy_trigger"] + _tag_contract_warnings(tag)
 
     # A SAC marker is present but did not match any supported grammar.
     return None, ["unsupported_sac_grammar"]

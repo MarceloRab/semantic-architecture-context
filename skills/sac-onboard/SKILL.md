@@ -225,12 +225,12 @@ Sem linha atual exata em `REPLACE/REMOVE`, sem assinatura comprovada ou com qual
 ### Normalização fechada
 
 ```text
-// SAC:ARCH: RULE|CONSTRAINT - <Symbol>: <constraint com MUST|NEVER|ONLY>
-// SAC:REGR: WARNING|CRITICAL - <Symbol>: <obrigação>; MUST verify: <symbol_or_basename>[, ...]
-// SAC:DEPRECATED: WARNING|CRITICAL - <Symbol>: <constraint>; replacement: <symbol|none>
+// SAC:ARCH: on=<ssot|boundary|ordering|state|exclusive|ownership> - <Symbol>: <constraint com MUST|NEVER|ONLY>
+// SAC:REGR: on=<snake_case_condition> - <Symbol>: <obrigação>; MUST verify: <symbol_or_basename>[, ...]
+// SAC:DEPRECATED: on=<snake_case_condition> - <Symbol>: <constraint>; replacement: <symbol|none>
 ```
 
-- Usar somente `ARCH`, `REGR`, `DEPRECATED` e triggers acima.
+- Usar somente `ARCH`, `REGR`, `DEPRECATED` e condições `on=` acima.
 - Usar o nome exato da assinatura seguinte.
 - Colocar bloco contíguo imediatamente acima da assinatura, na ordem `ARCH → REGR → DEPRECATED`.
 - Em `REGR verify`, aceitar somente tokens sem espaço que casem `[A-Za-z_][A-Za-z0-9_.$-]*`; proibir frases, regras ou sentenças.

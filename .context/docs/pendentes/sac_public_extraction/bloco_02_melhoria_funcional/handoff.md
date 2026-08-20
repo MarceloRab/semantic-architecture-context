@@ -4,14 +4,14 @@
 
 - Design: .context/docs/pendentes/sac_public_extraction/bloco_02_melhoria_funcional/design.md
 - Approved by: usuário, 2026-08-19 — autorização explícita para ativar o builder
-- Current: track_02
+- Current: track_03
 
 ## Tracks
 
 | Track | Goal | Depends on | Status | Attempt |
 | --- | --- | --- | --- | --- |
 | track_01 | verify: termina em `;` ou fim de linha; nenhum alvo descartado em silêncio | none | APPROVED | 1 |
-| track_02 | Campo `on=` com vocabulário fechado para ARCH e parser dual para tags legadas | track_01 | PENDING | 0 |
+| track_02 | Campo `on=` com vocabulário fechado para ARCH e parser dual para tags legadas | track_01 | APPROVED | 1 |
 | track_03 | AGENTS.md como porta de entrada e camada de atalho de dois níveis nas três skills | track_02 | PENDING | 0 |
 | track_04 | `_is_covered` avalia contra o conjunto completo; veredicto independente da ordem de caminhos | track_03 | PENDING | 0 |
 | track_05 | Registro de linguagens com Python, JS/TS e Go, e dogfooding bloqueante na CI | track_04 | PENDING | 0 |
@@ -45,6 +45,19 @@ Append entries; never rewrite history.
 - DoD 5: `node mcp/smoke.mjs` passou e imprimiu `[OK] dotted verify raw-line≡MCP targets=SmokeHop.method,SmokeHop`, comparando literalmente a lista declarada na linha crua da fixture com `matches[0].verify` retornado por `runLookup`.
 - DoD 6: `node mcp/smoke.mjs` completo terminou com `[OK] smoke exit 0`; todas as fixtures/tag forms anteriores continuaram parseáveis, além do novo caso pontuado. O gate adicional `python3 .github/scripts/check_hygiene.py` passou e `git diff --check` não encontrou erros.
 - Terminal: `EXECUTED` após implementação e execução das provas; `APPROVED` após checagem literal, neste mesmo chat, dos seis itens numerados acima.
+
+### track_02 — Attempt 1 — 2026-08-20 — EXECUTED + APPROVED
+
+- Outcome: a forma canônica agora usa `on=<condition>`; ARCH valida o vocabulário fechado `ssot|boundary|ordering|state|exclusive|ownership`, REGR/DEPRECATED validam `[a-z][a-z0-9_]{2,47}`, valores inválidos continuam visíveis com `invalid_trigger`, e o parser dual preserva as formas legadas com condição vazia e `legacy_trigger`. ADR, template, três skills públicas, documentação causal e smoke foram atualizados sem alterar o parsing de `verify:` da Track 01.
+- DoD 1: `python3 -m unittest tests/test_trigger_on.py -v` passou; `test_complete_legacy_matrix` reproduziu RULE e CONSTRAINT de ARCH, WARNING e CRITICAL de REGR e WARNING e CRITICAL de DEPRECATED, comprovando condição vazia, `legacy_trigger`, símbolo/constraint/verify/replacement preservados; `test_legacy_deprecated_still_requires_replacement` comprovou `deprecated_replacement_required`; `test_legacy_regr_if_modifying_form_remains_visible` comprovou a forma REGR legada adicional.
+- DoD 2: o mesmo comando passou; `test_legacy_and_new_tags_coexist_without_loss` escaneou uma fixture única com tag legada e tag `on=`, obteve os dois símbolos na ordem, condição `['', 'ssot']` e exatamente um warning `legacy_trigger`.
+- DoD 3: o mesmo comando passou; `test_arch_ssot_is_accepted` aceitou `on=ssot` sem warning, e `test_invalid_arch_condition_lists_exact_closed_vocabulary` manteve a tag e comparou literalmente `allowed=ssot|boundary|ordering|state|exclusive|ownership` e a tupla completa permitida.
+- DoD 4: o mesmo comando passou; `test_regr_snake_case_condition_is_accepted` aceitou `on=normalization_order`, e `test_invalid_regr_condition_keeps_tag` preservou símbolo, condição e verify de `on=X` com o warning literal do padrão `[a-z][a-z0-9_]{2,47}`.
+- DoD 5: `python3 - <<'PY' ...` comparou as linhas equivalentes `# SAC:ARCH: CONSTRAINT - Sym: MUST preserve behavior` e `# SAC:ARCH: on=ssot - Sym: MUST preserve behavior`, imprimiu `legacy=52 new=49 new_not_longer=True` e fez assert da desigualdade; `test_new_line_is_not_longer_than_legacy_equivalent` repetiu a prova no teste aprovado.
+- DoD 6: `git diff -U0 -- src | rg '^[+-][^+-].*(_KNOWN_TAGS|_BASE_SCENARIOS|_OPTIONAL_SCENARIOS)'` não encontrou qualquer linha adicionada/removida e o gate imprimiu `forbidden_constant_diff=empty`.
+- DoD 7: `rg -n 'Decisão|ssot.*boundary.*ordering.*state.*exclusive.*ownership|Compatibilidade|legacy_trigger' docs/adr/0001-sac-on-condition.md` comprovou a ADR, a decisão, o vocabulário fechado completo e a política de compatibilidade.
+- Regressão e gates: `python3 -m unittest tests/test_verify_parse.py -v`, `node mcp/smoke.mjs`, `python3 .github/scripts/check_hygiene.py` e `git diff --check` passaram. Inspeção programática comparando `HEAD:src/sac_engine.py` ao worktree imprimiu `track_01_verify_regex_and_parser_diff=empty` para `_VERIFY_TERMINAL_RE`, `_VERIFY_TARGET_RE` e `_parse_verify`.
+- Terminal: `EXECUTED` após implementação e execução das provas; `APPROVED` após checagem literal, neste mesmo chat, dos sete itens numerados acima.
 
 ## Pré-condição do bloco
 

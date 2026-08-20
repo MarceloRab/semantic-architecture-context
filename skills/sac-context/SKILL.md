@@ -65,44 +65,44 @@ Qual o filepath, ou gostaria de chamar list_sac_domains?
 
 ## O Padrão (Template Obrigatório)
 
-    <comment-marker> SAC:<TAG>: <TRIGGER> - <Symbol>: <Imperative Constraint>
+    <comment-marker> SAC:<TAG>: on=<condition> - <Symbol>: <Imperative Constraint>
 
 - `<comment-marker>`: Comentário INTERNO (`//`, `#`). NUNCA `///` / `/**`.
 - `<TAG>`: `ARCH`, `REGR` ou `DEPRECATED`.
-- `<TRIGGER>`: INGLÊS (`RULE`, `WARNING`, `CRITICAL`, `CONSTRAINT`).
+- `on=<condition>`: para ARCH, exatamente `ssot|boundary|ordering|state|exclusive|ownership`; para REGR/DEPRECATED, `[a-z][a-z0-9_]{2,47}`.
 - `<Symbol>`: Nome exato do símbolo. Nunca número de linha.
 - `<Imperative Constraint>`: Texto plano em inglês. **Proibido** JSON, crases markdown, `[]`/`{}` de array/objeto.
 
 ### 1. SAC:ARCH
 
-- **Triggers:** `RULE`, `CONSTRAINT`.
+- **Condições:** `on=ssot`, `on=boundary`, `on=ordering`, `on=state`, `on=exclusive`, `on=ownership`.
 - **Conteúdo:** `MUST` / `NEVER` / `ONLY`.
 - **Exemplo:**
 
-  // SAC:ARCH: RULE - ViewTransform: MUST own all viewport coordinate transforms. DO NOT delegate.
+  // SAC:ARCH: on=ownership - ViewTransform: MUST own all viewport coordinate transforms. DO NOT delegate.
   class ViewTransform { ... }
 
 ### 2. SAC:REGR
 
-- **Triggers:** `WARNING`, `CRITICAL`.
+- **Condição:** `on=<condition>` em snake_case, conforme `[a-z][a-z0-9_]{2,47}`.
 - **Formato:** `- <Symbol>: <condicional>. MUST verify: <alvo1>, <alvo2>, ...`
 - **Contrato:** lista `verify:` terminal até EOL com tokens separados por vírgula que casem `[A-Za-z_][A-Za-z0-9_.$-]*`. Frase narrativa/regra não é alvo hop1 e é proibida em linha nova ou substituída.
 - **Exemplo canônico:**
 
-  // SAC:REGR: WARNING - calculateDose: If modifying this method, you MUST verify: pediatric_module, ui_graph
+  // SAC:REGR: on=dose_change - calculateDose: If modifying this method, you MUST verify: pediatric_module, ui_graph
   double calculateDose() { ... }
 
   > Parser também aceita forma legada; **código novo = forma canônica `- <Symbol>:`**.
 
 ### 3. SAC:DEPRECATED
 
-- **Trigger:** `WARNING` ou `CRITICAL`.
+- **Condição:** `on=<condition>` em snake_case, conforme `[a-z][a-z0-9_]{2,47}`.
 - **Contrato:** identifica símbolo inseguro/obsoleto e termina com `replacement: <símbolo|none>`.
 - **Gate:** uso novo ou nova dependência é proibido. Leitura, diagnóstico, remoção ou migração explicitamente pedidos podem usar a tag para alcançar a substituição.
 - `replacement` ausente gera `deprecated_replacement_required` e HALT; risco nunca é ocultado.
 - **Exemplo:**
 
-  // SAC:DEPRECATED: WARNING - legacyStream: MUST NOT be used by new code; replacement: RealtimeStream
+  // SAC:DEPRECATED: on=new_dependency - legacyStream: MUST NOT be used by new code; replacement: RealtimeStream
   Stream legacyStream() { ... }
 
 ---
@@ -185,7 +185,7 @@ Cada bloco: `anchor_symbols`, `files`, `drawer_refs`, `known_gaps`.
 - `files_scanned` pelo MCP não significa arquivos abertos/lidos pelo agente; reportar ambos separadamente.
 - `anchor_symbols` é seleção do fast Context, não inventário total. Tag válida fora de anchors = `non_anchor_tag`, não orphan.
 - `orphan` só pode ser afirmado por `sac_scan.py validate`/AST; auditoria MCP-only registra `orphans: not_measured`.
-- Tag parseada não prova gramática canônica: validar matriz de trigger (`ARCH=RULE|CONSTRAINT`, `REGR=WARNING|CRITICAL`, `DEPRECATED=WARNING|CRITICAL`) e campos terminais (`verify`, `replacement`).
+- Tag parseada não prova gramática canônica: validar `on=` (`ARCH=ssot|boundary|ordering|state|exclusive|ownership`; `REGR/DEPRECATED=[a-z][a-z0-9_]{2,47}`) e campos terminais (`verify`, `replacement`).
 - Warnings canônicos do engine são bloqueantes para suficiência: `invalid_trigger`, `arch_imperative_required`, `regr_verify_required` e `deprecated_replacement_required`. A tag pode continuar visível no lookup, mas não é canônica.
 - Qualquer warning canônico em risco crítico força `INSUFFICIENT`; nunca “gap não bloqueante”.
 - `duplicate_constraints=0` só é comprovado se todas as constraints forem verificadas; Discover slim sozinho não prova.

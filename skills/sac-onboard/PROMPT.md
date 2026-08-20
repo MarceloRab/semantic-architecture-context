@@ -151,14 +151,14 @@ Sem tabela integralmente aprovada → HALT. O executor não completa campos, esc
 ### Normalização fechada
 
 ```text
-// SAC:ARCH: RULE|CONSTRAINT - <Symbol>: <constraint com MUST|NEVER|ONLY>
-// SAC:REGR: WARNING|CRITICAL - <Symbol>: <obrigação>; MUST verify: <symbol_or_basename>[, ...]
-// SAC:DEPRECATED: WARNING|CRITICAL - <Symbol>: <constraint>; replacement: <symbol|none>
+// SAC:ARCH: on=<ssot|boundary|ordering|state|exclusive|ownership> - <Symbol>: <constraint com MUST|NEVER|ONLY>
+// SAC:REGR: on=<snake_case_condition> - <Symbol>: <obrigação>; MUST verify: <symbol_or_basename>[, ...]
+// SAC:DEPRECATED: on=<snake_case_condition> - <Symbol>: <constraint>; replacement: <symbol|none>
 ```
 
 Regras de linha:
 
-- Somente `ARCH`, `REGR`, `DEPRECATED` e triggers acima.
+- Somente `ARCH`, `REGR`, `DEPRECATED` e condições `on=` acima.
 - Símbolo = nome exato da assinatura seguinte.
 - Bloco contíguo imediatamente acima da assinatura: `ARCH → REGR → DEPRECATED`.
 - `REGR verify:` = lista separada por vírgula de tokens sem espaço que casem `[A-Za-z_][A-Za-z0-9_.$-]*`; frase narrativa é proibida.

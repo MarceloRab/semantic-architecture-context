@@ -10,7 +10,7 @@ def parse_verify(constraint: str) -> tuple[list[str], list[str]]:
     tag, warnings = _parse_line(line)
     if tag is None:
         raise AssertionError(f"fixture did not parse: {line}")
-    return tag.verify, warnings
+    return tag.verify, [warning for warning in warnings if warning != "legacy_trigger"]
 
 
 class VerifyParseTest(unittest.TestCase):

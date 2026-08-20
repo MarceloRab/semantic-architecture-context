@@ -166,8 +166,8 @@ python sac-context/src/sac_scan.py index-build --check --root .
 ### Forma canônica (preferida)
 
 ```dart
-// SAC:<TAG>: <TRIGGER> - <Symbol>: <constraint>
-// SAC:REGR: WARNING - calculateDose: you MUST verify: pediatric_module, ui_graph.
+// SAC:<TAG>: on=<condition> - <Symbol>: <constraint>
+// SAC:REGR: on=dose_change - calculateDose: you MUST verify: pediatric_module, ui_graph.
 ```
 
 **Regra espacial:** uma tag fica imediatamente acima da assinatura. Quando um símbolo possui múltiplas tags, elas formam um bloco contíguo, sem linha em branco, na ordem `ARCH` → `REGR` → `DEPRECATED` → assinatura. O validator associa todo o bloco à declaração seguinte.
@@ -175,14 +175,14 @@ python sac-context/src/sac_scan.py index-build --check --root .
 Campos:
 
 - `TAG`: `ARCH` (invariante), `REGR` (alvos de verificação) ou `DEPRECATED` (risco de uso obsoleto).
-- `TRIGGER`: matriz fechada — `ARCH=RULE|CONSTRAINT`; `REGR=WARNING|CRITICAL`; `DEPRECATED=WARNING|CRITICAL`. Fora dela gera `invalid_trigger`.
+- `on=<condition>`: em ARCH, vocabulário fechado `ssot|boundary|ordering|state|exclusive|ownership`; em REGR/DEPRECATED, token `[a-z][a-z0-9_]{2,47}`. Fora dessas regras gera `invalid_trigger`.
 - `Symbol`: nome exato do símbolo declarado na linha seguinte.
 - `constraint`: imperativa. `ARCH` contém `MUST|NEVER|ONLY`; `REGR` preserva a obrigação semântica e termina com `verify:` não vazio contendo apenas tokens `[A-Za-z_][A-Za-z0-9_.$-]*` separados por vírgula, nunca frase narrativa; `DEPRECATED` termina com `replacement: <símbolo|none>`. Ausências geram warnings canônicos.
 
 Exemplo ARCH:
 
 ```dart
-// SAC:ARCH: RULE - pediatric_module: MUST validate pediatric dosing.
+// SAC:ARCH: on=boundary - pediatric_module: MUST validate pediatric dosing.
 class pediatric_module {
   void validate() {}
 }
@@ -191,27 +191,27 @@ class pediatric_module {
 Exemplo REGR:
 
 ```dart
-// SAC:REGR: WARNING - calculateDose: you MUST verify: pediatric_module, ui_graph.
+// SAC:REGR: on=dose_change - calculateDose: you MUST verify: pediatric_module, ui_graph.
 double calculateDose() { ... }
 ```
 
 Exemplo DEPRECATED:
 
 ```dart
-// SAC:DEPRECATED: WARNING - legacyDose: MUST NOT be used by new code; replacement: calculateDose
+// SAC:DEPRECATED: on=new_dependency - legacyDose: MUST NOT be used by new code; replacement: calculateDose
 double legacyDose() { ... }
 ```
 
 Uso novo/nova dependência de `DEPRECATED` → HALT. Leitura, diagnóstico, remoção ou migração explicitamente pedidos podem prosseguir. Ausência de `replacement` gera `deprecated_replacement_required` e risco bloqueante.
 
-### Forma legada REGR (ainda parseada, mas não use em novo código)
+### Formas legadas (ainda parseadas, mas não use em novo código)
 
 ```dart
 // SAC:REGR: WARNING - If modifying calculateDose, you MUST verify: pediatric_module, ui_graph.
 double calculateDose() { ... }
 ```
 
-> Preferir sempre a forma canônica. A forma legada existe apenas para compatibilidade com código V1.
+> `RULE|CONSTRAINT` em ARCH e `WARNING|CRITICAL` em REGR/DEPRECATED continuam parseáveis com condição vazia e warning `legacy_trigger`. Preferir sempre `on=`; a forma legada existe apenas para compatibilidade com código V1.
 
 ## Ferramental
 

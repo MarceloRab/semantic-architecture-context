@@ -14,10 +14,11 @@
 2. **Route:** exatamente um `intent` compatível → auto-selecionar; zero → bounded-unmapped; múltiplos → perguntar / NO-GO.
 3. **Contexto:** `get_sac_context({domain_id})` monta anchors + `REGR`/`DEPRECATED` + hop1 em uma chamada; nunca carregar todos os domínios.
 4. **Alvo concreto:** `get_sac_constraints(<symbol>, filepath=<path ∈ files:>, domain_id)`.
-5. **Inspeção detalhada:** `files:` é limite de busca, não fila de leitura; abrir o alvo primário e somente dependências objetivas da task. `discover_sac({domain_id})`; fallback `rg` scoped.
-6. **Novo domínio:** `sac-onboard mode=ASSESS`; `REGISTER` só indexa tags existentes; `TAG_DELTA` é o único modo que altera tags.
-7. **Capilaridade:** opcional; base `SUMMARY, EXTEND, REGRESSION`; claims = `claim_id|scenario|tag_type|symbol|filepath` (5 colunas). Papéis estruturais: `SUMMARY`→ARCH, `EXTEND`→ARCH, `REGRESSION`→REGR; `ARCH` para Context deve constar em `anchor_symbols`. Sem claims ⇒ não declarar suficiência.
-8. **Saída:** handoff somente no chat; não criar relatório persistente. Registrar `sac_scope`, limite real, warnings e `domain_index_status`.
+5. **Sem ferramenta:** filtrar primeiro por condição com `rg 'SAC:.*on=<condition>' <files:>`; ARCH usa `ssot|boundary|ordering|state|exclusive|ownership`, e REGR/DEPRECATED usam `[a-z][a-z0-9_]{2,47}`.
+6. **Inspeção detalhada:** `files:` é limite de busca, não fila de leitura; abrir o alvo primário e somente dependências objetivas da task. `discover_sac({domain_id})`; fallback `rg` scoped.
+7. **Novo domínio:** `sac-onboard mode=ASSESS`; `REGISTER` só indexa tags existentes; `TAG_DELTA` é o único modo que altera tags.
+8. **Capilaridade:** opcional; base `SUMMARY, EXTEND, REGRESSION`; claims = `claim_id|scenario|tag_type|symbol|filepath` (5 colunas). Papéis estruturais: `SUMMARY`→ARCH, `EXTEND`→ARCH, `REGRESSION`→REGR; `ARCH` para Context deve constar em `anchor_symbols`. Sem claims ⇒ não declarar suficiência.
+9. **Saída:** handoff somente no chat; não criar relatório persistente. Registrar `sac_scope`, limite real, warnings e `domain_index_status`.
 
 ### COR-3 — resolução de domínio (fechada)
 
