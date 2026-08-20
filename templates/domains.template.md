@@ -18,6 +18,7 @@
 6. **Inspeção detalhada:** `files:` é limite de busca, não fila de leitura; abrir o alvo primário e somente dependências objetivas da task. `discover_sac({domain_id})`; fallback `rg` scoped.
 7. **Novo domínio:** `sac-onboard mode=ASSESS`; `REGISTER` só indexa tags existentes; `TAG_DELTA` é o único modo que altera tags.
 8. **Capilaridade:** opcional; base `SUMMARY, EXTEND, REGRESSION`; claims = `claim_id|scenario|tag_type|symbol|filepath` (5 colunas). Papéis estruturais: `SUMMARY`→ARCH, `EXTEND`→ARCH, `REGRESSION`→REGR; `ARCH` para Context deve constar em `anchor_symbols`. Sem claims ⇒ não declarar suficiência.
+   O piso de anchors é exatamente o conjunto de símbolos das claims ARCH: para minimizar `anchor_symbols`, minimize antes as claims ARCH sem violar os papéis estruturais.
 9. **Saída:** handoff somente no chat; não criar relatório persistente. Registrar `sac_scope`, limite real, warnings e `domain_index_status`.
 
 ### COR-3 — resolução de domínio (fechada)
