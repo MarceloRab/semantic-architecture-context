@@ -4,13 +4,13 @@
 
 - Design: .context/docs/pendentes/sac_public_extraction/bloco_02_melhoria_funcional/design.md
 - Approved by: usuário, 2026-08-19 — autorização explícita para ativar o builder
-- Current: track_01
+- Current: track_02
 
 ## Tracks
 
 | Track | Goal | Depends on | Status | Attempt |
 | --- | --- | --- | --- | --- |
-| track_01 | verify: termina em `;` ou fim de linha; nenhum alvo descartado em silêncio | none | PENDING | 0 |
+| track_01 | verify: termina em `;` ou fim de linha; nenhum alvo descartado em silêncio | none | APPROVED | 1 |
 | track_02 | Campo `on=` com vocabulário fechado para ARCH e parser dual para tags legadas | track_01 | PENDING | 0 |
 | track_03 | AGENTS.md como porta de entrada e camada de atalho de dois níveis nas três skills | track_02 | PENDING | 0 |
 | track_04 | `_is_covered` avalia contra o conjunto completo; veredicto independente da ordem de caminhos | track_03 | PENDING | 0 |
@@ -34,6 +34,17 @@ The executor performs the literal DoD check in the same chat. When every item ha
 ## Attempts
 
 Append entries; never rewrite history.
+
+### track_01 — Attempt 1 — 2026-08-20 — EXECUTED + APPROVED
+
+- Outcome: o parser de `verify:` agora captura até `;` ou fim da linha, preserva pontos dentro de tokens, valida cada alvo contra `[A-Za-z_][A-Za-z0-9_.$-]*`, mantém todos os alvos válidos e emite `invalid_verify_target target=<token>` para cada alvo inválido. O mesmo parsing é usado pelas formas canônica e REGR legada; `_is_covered`, `trigger` e consumidores não foram alterados.
+- DoD 1: `python3 -m unittest tests/test_verify_parse.py` passou; `test_dotted_target_and_second_target_are_preserved` provou `verify: Cache.key, Adapter` → `['Cache.key', 'Adapter']` e warnings `[]`.
+- DoD 2: o mesmo comando passou; `test_terminal_period_preserves_existing_behavior` provou `verify: CacheKey, Adapter.` → `['CacheKey', 'Adapter']`, e `test_narrative_before_verify_preserves_existing_behavior` provou a narrativa anterior seguida de `MUST verify: CacheKey` → `['CacheKey']`, ambos sem warnings.
+- DoD 3: o mesmo comando passou; `test_invalid_target_is_named_without_dropping_valid_target` provou `verify: 9bad, Good` → `['Good']` e warning exato `invalid_verify_target target=9bad`.
+- DoD 4: o mesmo comando passou; `test_semicolon_ends_verify_list` provou `verify: A; texto depois` → `['A']` sem warnings.
+- DoD 5: `node mcp/smoke.mjs` passou e imprimiu `[OK] dotted verify raw-line≡MCP targets=SmokeHop.method,SmokeHop`, comparando literalmente a lista declarada na linha crua da fixture com `matches[0].verify` retornado por `runLookup`.
+- DoD 6: `node mcp/smoke.mjs` completo terminou com `[OK] smoke exit 0`; todas as fixtures/tag forms anteriores continuaram parseáveis, além do novo caso pontuado. O gate adicional `python3 .github/scripts/check_hygiene.py` passou e `git diff --check` não encontrou erros.
+- Terminal: `EXECUTED` após implementação e execução das provas; `APPROVED` após checagem literal, neste mesmo chat, dos seis itens numerados acima.
 
 ## Pré-condição do bloco
 

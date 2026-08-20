@@ -35,15 +35,16 @@ _LEGACY_REGR_RE = re.compile(
     r"-\s+"
     r"If modifying\s+(?P<symbol>[^,]+),\s+"
     r".*?"
-    r"(?:verify|MUST verify|you MUST verify):\s*(?P<verify>[^.]+)",
+    r"(?:verify|MUST verify|you MUST verify):\s*(?P<verify>[^;]*)",
     re.IGNORECASE,
 )
 
-# Last `verify:` on the line, terminal, comma-separated, optional trailing dot.
+# Last `verify:` on the line, comma-separated, ending at semicolon or line end.
 _VERIFY_TERMINAL_RE = re.compile(
-    r".*\bverify:\s*(?P<targets>[^.]+)",
+    r".*\bverify:\s*(?P<targets>[^;]*)",
     re.IGNORECASE,
 )
+_VERIFY_TARGET_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_.$-]*\Z")
 
 _REPLACEMENT_TERMINAL_RE = re.compile(
     r".*\breplacement:\s*(?P<target>[A-Za-z0-9_.$:/-]+)\.?\s*$",
@@ -134,33 +135,42 @@ class SacTag:
         return data
 
 
-def _strip_trailing_punctuation(targets: str) -> str:
-    """Remove trailing dot/semicolon from a comma-separated verify list."""
-    return targets.rstrip(".;")
-
-
-def _parse_verify(constraint: str) -> list[str]:
+def _parse_verify(constraint: str) -> tuple[list[str], list[str]]:
     """Extract the terminal verify: list from a constraint string.
 
-    Returns an empty list if no verify clause is present.
+    Return valid targets and a named warning for every invalid target.
     """
     match = _VERIFY_TERMINAL_RE.match(constraint)
     if not match:
-        return []
-    raw = _strip_trailing_punctuation(match.group("targets"))
-    return [item.strip() for item in raw.split(",") if item.strip()]
+        return [], []
+    raw = match.group("targets").strip()
+    # A final full stop terminates the sentence; dots inside targets are data.
+    if raw.endswith("."):
+        raw = raw[:-1].rstrip()
+    targets: list[str] = []
+    warnings: list[str] = []
+    for item in raw.split(","):
+        target = item.strip()
+        if not target:
+            continue
+        if _VERIFY_TARGET_RE.fullmatch(target):
+            targets.append(target)
+        else:
+            warnings.append(f"invalid_verify_target target={target}")
+    return targets, warnings
 
 
-def _parse_canonical(line: str) -> SacTag | None:
+def _parse_canonical(line: str) -> tuple[SacTag | None, list[str]]:
     match = _CANONICAL_RE.match(line)
     if not match:
-        return None
+        return None, []
     tag_type = match.group("tag")
     constraint = match.group("constraint").strip()
     verify: list[str] = []
     replacement: str | None = None
+    warnings: list[str] = []
     if tag_type == "REGR":
-        verify = _parse_verify(constraint)
+        verify, warnings = _parse_verify(constraint)
     elif tag_type == "DEPRECATED":
         replacement_match = _REPLACEMENT_TERMINAL_RE.match(constraint)
         if replacement_match:
@@ -174,14 +184,14 @@ def _parse_canonical(line: str) -> SacTag | None:
         constraint=constraint,
         verify=verify,
         replacement=replacement,
-    )
+    ), warnings
 
 
-def _parse_legacy_regr(line: str) -> SacTag | None:
+def _parse_legacy_regr(line: str) -> tuple[SacTag | None, list[str]]:
     match = _LEGACY_REGR_RE.search(line)
     if not match:
-        return None
-    raw_verify = _strip_trailing_punctuation(match.group("verify"))
+        return None, []
+    verify, warnings = _parse_verify(f"verify: {match.group('verify')}")
     return SacTag(
         file="",
         line=0,
@@ -189,8 +199,8 @@ def _parse_legacy_regr(line: str) -> SacTag | None:
         trigger=match.group("trigger"),
         symbol=match.group("symbol").strip(),
         constraint=match.group(0).strip(),
-        verify=[item.strip() for item in raw_verify.split(",") if item.strip()],
-    )
+        verify=verify,
+    ), warnings
 
 
 def _tag_contract_warnings(tag: SacTag) -> list[str]:
@@ -217,17 +227,17 @@ def _parse_line(line: str) -> tuple[SacTag | None, list[str]]:
         return None, []
 
     if "If modifying" in line:
-        tag = _parse_legacy_regr(line)
+        tag, parse_warnings = _parse_legacy_regr(line)
         if tag is not None:
-            return tag, _tag_contract_warnings(tag)
+            return tag, parse_warnings + _tag_contract_warnings(tag)
 
-    tag = _parse_canonical(line)
+    tag, parse_warnings = _parse_canonical(line)
     if tag is not None:
-        return tag, _tag_contract_warnings(tag)
+        return tag, parse_warnings + _tag_contract_warnings(tag)
 
-    tag = _parse_legacy_regr(line)
+    tag, parse_warnings = _parse_legacy_regr(line)
     if tag is not None:
-        return tag, _tag_contract_warnings(tag)
+        return tag, parse_warnings + _tag_contract_warnings(tag)
 
     # A SAC marker is present but did not match any supported grammar.
     return None, ["unsupported_sac_grammar"]
@@ -918,6 +928,7 @@ def lookup(
 
 _CANONICAL_WARNING_MARKERS = (
     "invalid_trigger",
+    "invalid_verify_target",
     "arch_imperative_required",
     "regr_verify_required",
     "deprecated_replacement_required",
