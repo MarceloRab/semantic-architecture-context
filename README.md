@@ -18,20 +18,17 @@
    Sem regras vagas ou prosa solta em documentações esquecidas. O SAC utiliza imperativos formais (`MUST`, `NEVER`, `ONLY`, `DEVE`, `NUNCA`) e condições explícitas (`on=ssot`, `on=ordering`, `verify:`), permitindo validação e parsing determinísticos sem suposições heurísticas.
 
 3. **Benefício ao Agente Cego & Degradação Graciosa (Blind-Agent Utility — SAC-PR3)**
-   **O grande diferencial**: os invariantes residem no próprio código-fonte, imediatamente acima do símbolo que protegem. O agente de IA ou desenvolvedor humano que lê o arquivo diretamente no editor ou via `grep` recebe exatamente o mesmo contrato semântico que o agente conectado via MCP. O servidor MCP orçamenta e acelera o roteamento, mas **nunca entrega menos informação do que a leitura direta da linha crua**.
+   **O grande diferencial**: os invariantes residem no próprio código-fonte, imediatamente acima do símbolo que protegem. O agente de IA ou desenvolvedor humano que lê o arquivo diretamente no editor recebe o contrato semântico na mesma leitura. O SAC transforma o código-fonte em um **"System Prompt Distribuído"** — a regra entra diretamente na janela de atenção do modelo (*in-band context*) no exato ponto de edição, tornando o contrato arquitetural **fisicamente impossível de ser ignorado**, mesmo por agentes sem MCP ou ferramentas externas.
 
 ---
 
 ## Como o Agente Opera (Com e Sem MCP)
 
 * **Com Servidor MCP Ativo**: O assistente descobre domínios via `list_sac_domains`, obtém overlays compactos via `get_sac_context` e consulta contratos cirúrgicos via `get_sac_constraints` com controle estrito de orçamento de bytes e resolução de dependências de 1º salto (*hop1*).
-* **Sem MCP (Caminho Degradado / Agente Cego)**:
-  1. O agente lê o manifesto [`.sac/domains.md`](.sac/domains.md) para identificar os domínios e seus arquivos delimitadores (`files:`).
-  2. Localiza restrições cirúrgicas no terminal com um simples filtro:
-     ```bash
-     grep -n "SAC:" src/seu_modulo.py
-     ```
-  3. Respeita os imperativos declarados na linha comentada antes de gerar qualquer diff.
+* **Sem MCP (Caminho Degradado / Agente Totalmente Cego)**:
+  1. Ao inspecionar qualquer método ou classe (`view_file`, `cat` ou editor), o modelo ingere a tag comentada no cabeçalho e obedece aos imperativos (`MUST/NEVER`) naturalmente como instrução de contexto imediata.
+  2. Opcionalmente, pode consultar [`.sac/domains.md`](.sac/domains.md) como mapa de fronteira (`files:`) e filtrar regras com `grep -n "SAC:"`.
+  3. Resultado: **Zero dependência de ferramentas proprietárias e zero documentação esquecida** — cada função carrega sua própria constituição.
 
 ---
 
