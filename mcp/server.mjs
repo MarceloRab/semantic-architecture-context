@@ -288,10 +288,14 @@ export function jsonToolResult(obj, isError = false) {
     content: [
       {
         type: "text",
-        text: JSON.stringify(obj, null, 1),
+        text: serializePayload(obj),
       },
     ],
   };
+}
+
+export function serializePayload(obj) {
+  return JSON.stringify(obj, null, 1);
 }
 
 /**
@@ -302,16 +306,21 @@ export function jsonToolResult(obj, isError = false) {
  * @param {Record<string, unknown>} [extra]
  */
 export function withPerf(tool, startedAt, payload, extra = {}) {
-  return {
+  const result = {
     ...payload,
     _perf: {
       tool,
       elapsed_ms: Math.round(performance.now() - startedAt),
-      payload_bytes: Buffer.byteLength(JSON.stringify(payload), "utf8"),
-      sac_root: resolveSacRoot(),
       ...extra,
+      payload_bytes: 0,
     },
   };
+  let measured = -1;
+  while (result._perf.payload_bytes !== measured) {
+    measured = result._perf.payload_bytes;
+    result._perf.payload_bytes = Buffer.byteLength(serializePayload(result), "utf8");
+  }
+  return result;
 }
 
 /**

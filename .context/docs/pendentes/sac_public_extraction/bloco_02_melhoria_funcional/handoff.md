@@ -4,7 +4,7 @@
 
 - Design: .context/docs/pendentes/sac_public_extraction/bloco_02_melhoria_funcional/design.md
 - Approved by: usuário, 2026-08-19 — autorização explícita para ativar o builder
-- Current: track_06
+- Current: track_07
 
 ## Tracks
 
@@ -15,7 +15,7 @@
 | track_03 | AGENTS.md como porta de entrada e camada de atalho de dois níveis nas três skills | track_02 | APPROVED | 1 |
 | track_04 | `_is_covered` avalia contra o conjunto completo; veredicto independente da ordem de caminhos | track_03 | APPROVED | 1 |
 | track_05 | Registro de linguagens com Python, JS/TS e Go, e dogfooding bloqueante na CI | track_04 | APPROVED | 2 |
-| track_06 | file relativo, `_perf.sac_root` removido, orçamento e payload_bytes na unidade emitida | track_05 | PENDING | 0 |
+| track_06 | file relativo, `_perf.sac_root` removido, orçamento e payload_bytes na unidade emitida | track_05 | APPROVED | 1 |
 | track_07 | OVER_SELECT deixa de contar tags auto-incluídas; piso de anchors reportado pelo assess | track_06 | PENDING | 0 |
 | track_08 | Marcador de comentário sem whitelist e vocabulário imperativo PT+EN | track_07 | PENDING | 0 |
 | track_09 | Promessa honesta, política de vetos publicada, RELEASE_GATE satisfeito e tag 0.1.0 | track_08 | PENDING | 0 |
@@ -108,6 +108,18 @@ Append entries; never rewrite history.
 - DoD 7: inspeção de `README.md` confirmou a matriz de primeira classe com Python, JavaScript, JavaScript com JSX, TypeScript, TypeScript com JSX, Go, Dart e PowerShell.
 - Regressão e gates: `python3 -m unittest discover -s tests -v`, `node mcp/smoke.mjs`, `python3 .github/scripts/check_hygiene.py`, `python3 .github/scripts/check_version.py`, `python3 src/sac_scan.py validate --root .`, `python3 src/sac_scan.py index-build --root .` e `git diff --check` passaram. A inspeção AST contra a base da Track 05 imprimiu `_is_covered_unchanged=True`, `_extract_acks_unchanged=True`, `_gather_acks_unchanged=True` e `diff_check_unchanged=True`; `git diff 23111df -- AGENTS.md skills src/sac_engine.py` ficou vazio; o diff-check local contra a base completa da PR imprimiu `exit 0`.
 - Terminal: `EXECUTED` após produzir e reunir as provas solicitadas; `APPROVED` após checagem literal, neste mesmo chat, dos sete itens numerados. `Current` avança para `track_06`.
+
+### track_06 — Attempt 1 — 2026-08-20 — EXECUTED + APPROVED
+
+- Outcome: o engine agora relativiza `file` e caminhos em warnings pela função compartilhada `relativize_under_root`; o orçamento mede a serialização indentada efetivamente emitida pela CLI; o envelope MCP removeu `_perf.sac_root` e calcula `_perf.payload_bytes` por ponto fixo sobre o payload completo, incluindo `_perf` e indentação. O smoke compara stdout bruto para a mesma consulta com root relativo e absoluto, sem normalização.
+- DoD 1: `node mcp/smoke.mjs` passou e imprimiu `[OK] relative/absolute --root byte parity bytes=2389`; o caso executa duas vezes `context --domain smoke_domain`, uma com root relativo e outra com root absoluto, e compara diretamente os buffers de stdout com `Buffer.equals`, sem parse, normalização ou reordenação.
+- DoD 2: a inspeção recursiva do JSON produzido por `python3 src/sac_scan.py context --root "$PWD" --domain sac_core --json` imprimiu `absolute_paths=absent sac_root=absent`; a inspeção do diff confirmou a remoção de `_perf.sac_root` e a relativização no Python, sem reescrita de path no Node.
+- DoD 3: a medição independente `Buffer.byteLength(result.content[0].text, "utf8")` sobre `jsonToolResult(withPerf(...))` imprimiu `reported=113 actual=113`, incluindo `_perf` e a indentação no texto efetivamente entregue para escrita.
+- DoD 4: a prova manual mediu 1.238 bytes no stdout irrestrito (excluído somente o newline acrescentado por `print`), executou novamente com limite 1.237 e obteve `emitted_bytes=1238 budget_measured=1238 ratio=1.000`.
+- DoD 5: a mesma execução manual de overflow imprimiu `code=context_payload_too_large exit=1 message=Context exceeds the configured token budget; no constraints were returned.`, preservando literalmente código, mensagem, exit code e ausência de truncamento.
+- DoD 6: a regressão plantada substituiu temporariamente, no engine, a relativização do `file` de contexto por `tag.file`; `node mcp/smoke.mjs` falhou no novo caso com `[FAIL] relative/absolute --root byte parity` e `planted_root_leak_exit=1`; o arquivo original foi restaurado antes dos gates e do commit.
+- Regressão e gates: `python3 -m unittest discover -s tests -v`, os quatro módulos dirigidos das Tracks 01, 02, 04 e 05, `python3 ci/test_track_09_dod.py`, `node mcp/smoke.mjs`, hygiene, version, validate, index-build e `git diff --check` passaram. A inspeção do diff confirmou ausência de alterações em gramática, `_is_covered`, SAC-ACK, registro lexical, fixtures da Track 05, workflow, README, AGENTS.md e skills.
+- Terminal: `EXECUTED` após implementação e execução das provas; `APPROVED` após checagem literal, neste mesmo chat, dos seis itens numerados acima. `Current` avança para `track_07`.
 
 ## Pré-condição do bloco
 

@@ -23,6 +23,7 @@ from sac_engine import (  # noqa: E402
     build_domain_context,
     check_symbol_index,
     discover_domain,
+    emitted_json,
     lookup,
     symbol_index_path,
     write_symbol_index,
@@ -474,7 +475,7 @@ def _cmd_lookup(args: argparse.Namespace) -> int:
     result = attach_gates_bypassed(result)
 
     if args.json:
-        print(json.dumps(result, indent=1))
+        print(emitted_json(result))
     else:
         print(_render_lookup(result))
 
@@ -488,7 +489,7 @@ def _cmd_list_domains(args: argparse.Namespace) -> int:
         return 2
     payload = list_sac_domains_payload(args.root, domain_id=args.domain_id)
     payload = attach_gates_bypassed(payload)
-    print(json.dumps(payload, indent=1))
+    print(emitted_json(payload))
     return 1 if payload.get("error") else 0
 
 
@@ -499,7 +500,7 @@ def _cmd_discover(args: argparse.Namespace) -> int:
         return 2
     payload = discover_domain(args.root, args.domain_id)
     payload = attach_gates_bypassed(payload)
-    print(json.dumps(payload, indent=1))
+    print(emitted_json(payload))
     return 1 if payload.get("error") else 0
 
 
@@ -510,7 +511,7 @@ def _cmd_context(args: argparse.Namespace) -> int:
         return 2
     payload = build_domain_context(args.root, args.domain_id)
     payload = attach_gates_bypassed(payload)
-    print(json.dumps(payload, indent=1))
+    print(emitted_json(payload))
     return 1 if payload.get("error") else 0
 
 
