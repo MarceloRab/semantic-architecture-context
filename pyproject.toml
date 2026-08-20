@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "semantic-architecture-context"
+version = "0.1.0"
+description = "Semantic Architecture Context (SAC) - Deterministic architectural context engine and verification gate for AI coding agents."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "Marcelo Rabelo" }
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.scripts]
+sac = "src.sac_scan:main"
+sac-scan = "src.sac_scan:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]

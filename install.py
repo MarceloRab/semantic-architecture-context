@@ -96,6 +96,88 @@ def compute_file_sha256(filepath: Path) -> Optional[str]:
     return hasher.hexdigest()
 
 
+SAC_BOOT_START_MARKER = "<!-- SAC:BOOT:START -->"
+SAC_BOOT_END_MARKER = "<!-- SAC:BOOT:END -->"
+
+SAC_BOOT_SNIPPET = f"""{SAC_BOOT_START_MARKER}
+# SAC Architecture Gate
+# Este projeto adota o Semantic Architecture Context (SAC).
+# Consulte AGENTS.md e execute os comandos CLI (sac list-domains / sac context) antes de inspecionar codigo.
+{SAC_BOOT_END_MARKER}"""
+
+
+def inject_harness_boot_hooks(target_root: Path) -> list[str]:
+    """
+    Idempotently injects SAC boot markers into existing harness configuration files
+    (.cursorrules, CLAUDE.md, .github/copilot-instructions.md).
+    Never creates ghost files if the harness is not used by the target project.
+    """
+    actions: list[str] = []
+
+    # 1. .cursorrules
+    cursorrules_path = target_root / ".cursorrules"
+    if cursorrules_path.is_file():
+        try:
+            with open(cursorrules_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            if SAC_BOOT_START_MARKER not in content:
+                updated = content.rstrip()
+                if "auto_read_only:" in updated and '"AGENTS.md"' not in updated and "'AGENTS.md'" not in updated:
+                    updated = re.sub(
+                        r'(auto_read_only:\s*\[)([^\]]*)(\])',
+                        lambda m: m.group(1) + m.group(2) + (', "AGENTS.md"' if m.group(2).strip() else '"AGENTS.md"') + m.group(3),
+                        updated,
+                    )
+                if "L1_gate:" in updated and '"AGENTS.md"' not in updated and "'AGENTS.md'" not in updated:
+                    updated = re.sub(
+                        r'(L1_gate:\s*\[)([^\]]*)(\])',
+                        lambda m: m.group(1) + m.group(2) + (', "AGENTS.md"' if m.group(2).strip() else '"AGENTS.md"') + m.group(3),
+                        updated,
+                    )
+                updated += f"\n\n{SAC_BOOT_SNIPPET}\n"
+                with open(cursorrules_path, "w", encoding="utf-8") as f:
+                    f.write(updated)
+                actions.append("Injected SAC boot hook and AGENTS.md into existing .cursorrules.")
+            else:
+                actions.append("Preserved existing SAC boot hook in .cursorrules.")
+        except Exception as exc:
+            actions.append(f"Warning: Could not update .cursorrules: {exc}")
+
+    # 2. CLAUDE.md
+    claude_md_path = target_root / "CLAUDE.md"
+    if claude_md_path.is_file():
+        try:
+            with open(claude_md_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            if SAC_BOOT_START_MARKER not in content:
+                updated = content.rstrip() + f"\n\n{SAC_BOOT_SNIPPET}\n"
+                with open(claude_md_path, "w", encoding="utf-8") as f:
+                    f.write(updated)
+                actions.append("Injected SAC boot hook into existing CLAUDE.md.")
+            else:
+                actions.append("Preserved existing SAC boot hook in CLAUDE.md.")
+        except Exception as exc:
+            actions.append(f"Warning: Could not update CLAUDE.md: {exc}")
+
+    # 3. .github/copilot-instructions.md
+    copilot_path = target_root / ".github" / "copilot-instructions.md"
+    if copilot_path.is_file():
+        try:
+            with open(copilot_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            if SAC_BOOT_START_MARKER not in content:
+                updated = content.rstrip() + f"\n\n{SAC_BOOT_SNIPPET}\n"
+                with open(copilot_path, "w", encoding="utf-8") as f:
+                    f.write(updated)
+                actions.append("Injected SAC boot hook into existing .github/copilot-instructions.md.")
+            else:
+                actions.append("Preserved existing SAC boot hook in .github/copilot-instructions.md.")
+        except Exception as exc:
+            actions.append(f"Warning: Could not update copilot-instructions.md: {exc}")
+
+    return actions
+
+
 def install_target(
     sac_repo_root: Path,
     target_root: Path,
@@ -167,17 +249,11 @@ def install_target(
             report["errors"].append(err_msg)
             return report
 
-    # Ensure AGENTS.md exists with SAC CLI entry point in target_root
+    # Ensure AGENTS.md exists in target_root
     target_agents_md = target_root / "AGENTS.md"
-    scan_script = sac_repo_root / "src" / "sac_scan.py"
-    scan_script_str = scan_script.resolve().as_posix()
-
     try:
         with open(agents_template_path, "r", encoding="utf-8") as f:
-            agents_template_content = f.read()
-        sac_agents_block = agents_template_content.replace(
-            "__SAC_SCAN_PATH__", f'"{scan_script_str}"'
-        )
+            sac_agents_block = f.read()
 
         if not target_agents_md.exists():
             with open(target_agents_md, "w", encoding="utf-8") as f:
@@ -202,9 +278,13 @@ def install_target(
             "Error code: sac.installer.agents_md_configuration_failed"
         )
         report["errors"].append(err_msg)
-        return report
+    # Inject boot hooks into existing meta-harness files (.cursorrules, CLAUDE.md, copilot)
+    harness_actions = inject_harness_boot_hooks(target_root)
+    for act in harness_actions:
+        report["actions"].append(act)
 
     # Verify that target responds to list-domains CLI
+    scan_script = sac_repo_root / "src" / "sac_scan.py"
     if not scan_script.is_file():
         err_msg = (
             f"SAC scanner not found at {scan_script}. "

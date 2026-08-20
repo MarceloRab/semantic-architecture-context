@@ -10,17 +10,20 @@ SAC:DEPRECATED: on=<snake_case_condition> - <Symbol>: <restrição>; replacement
 
 `files:` é **limite de busca, não fila de leitura**: abra somente o alvo e arquivos adicionais ligados por evidência objetiva.
 
-Sem MCP, obtenha o catálogo e as constraints do domínio pela CLI:
+Sem MCP, obtenha o catálogo e as constraints do domínio pela CLI universal:
 
 ```bash
 # Listar domínios (Catálogo L0)
-python __SAC_SCAN_PATH__ list-domains --root . --json
+sac list-domains --root . --json
+# ou via python: python -m src.sac_scan list-domains --root . --json
 
 # Carregar constraints e dependências do domínio (Context L1)
-python __SAC_SCAN_PATH__ context --root . --domain <domain_id> --json
+sac context --root . --domain <domain_id> --json
+# ou via python: python -m src.sac_scan context --root . --domain <domain_id> --json
 
 # Validar co-edição e integridade após alterações (Gate)
-python __SAC_SCAN_PATH__ diff-check --root . --base HEAD^
+sac diff-check --root . --base HEAD^
+# ou via python: python -m src.sac_scan diff-check --root . --base HEAD^
 ```
 
 Atalhos tool-neutral, estáveis e disjuntos:

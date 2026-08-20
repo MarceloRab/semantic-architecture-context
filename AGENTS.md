@@ -13,7 +13,14 @@ SAC:DEPRECATED: on=<snake_case_condition> - <Symbol>: <restrição>; replacement
 Sem MCP, obtenha as constraints do domínio pela CLI:
 
 ```bash
-python3 src/sac_scan.py context --root . --domain <domain_id> --json
+# Listar domínios (Catálogo L0)
+python src/sac_scan.py list-domains --root . --json
+
+# Carregar constraints e dependências do domínio (Context L1)
+python src/sac_scan.py context --root . --domain <domain_id> --json
+
+# Validar co-edição e integridade após alterações (Gate)
+python src/sac_scan.py diff-check --root . --base HEAD^
 ```
 
 Atalhos tool-neutral, estáveis e disjuntos:
