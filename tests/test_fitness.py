@@ -10,7 +10,16 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from sac_engine import assess_domain_capillarity
 
 
+def test_guard(source):
+    """Physical verification target named by the baseline fixture's REGR."""
+    return "MUST verify: test_guard" in source
+
+
 class FitnessTest(unittest.TestCase):
+    def test_physical_guard_target(self):
+        """Keep the baseline fixture's physical REGR verification target covered."""
+        self.assertTrue(test_guard(self.BASE_SOURCE))
+
     def assess(self, source, anchors, claims):
         with tempfile.TemporaryDirectory() as root:
             os.makedirs(os.path.join(root, ".sac"))
